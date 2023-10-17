@@ -1,0 +1,10 @@
+(ocamllex
+ (modules lexer))
+(menhir
+ (modules parser))
+(library
+  (name compilo)
+  (modules parser ast)
+  (libraries unix)
+)
+
