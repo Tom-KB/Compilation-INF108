@@ -3,7 +3,7 @@ type pos = Lexing.position
 
 type program = obj list
 and obj = F of func | Fv of func_v | V of t * string
-and func = { type_obj : t; name : string; args : (t * string) array; body : stmt }
+and func = { typ : t; name : string; args : (t * string) array; body : stmt }
 and func_v = { name_v : string; args_v : (t * string) array; body_v : stmt }
 and t = Int | Char | P of t
 and stmt = stmt_node * pos

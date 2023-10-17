@@ -25,18 +25,18 @@
 %left PLUS MINUS 
 %left TIMES DIV MOD
 /* Le "%prec uminus" dans la règle expr donne au moins (déjà utile pour l'opération binaire)
-   la précédence d'un opérateur unaire. Utile à savoir plus tard pour le "*". */
+   la précédence d'un opérateur unaire. Utile à savoir plus tard pour le "*" et les pointeurs. */
 %nonassoc uminus
 
 /* Point d'entrée de la grammaire */
-%start program
+%start file
 
 /* Type des valeurs retournées par l'analyseur syntaxique */
-%type <Ast.program> program 
+%type <Ast.program> file 
 
 %%
 
-program: func* EOF { $1 }
+file: obj* EOF { $1 }
 ;
 
 typ:
@@ -46,13 +46,13 @@ typ:
 
 arg: typ IDENT {($1, $2)}
 
-func:
-  | func_e { F $1 }
+obj:
+  | func   { F $1 }
   | func_v { Fv $1 }
   ;
 
-func_e: typ IDENT LP separated_list(COMMA, arg) RP block 
-    {{ type_obj = $1; name = $2; args = Array.of_list $4; body = $6 }}
+func: typ IDENT LP separated_list(COMMA, arg) RP block 
+    {{ typ = $1; name = $2; args = Array.of_list $4; body = $6 }}
 ;
 func_v: VOID IDENT LP separated_list(COMMA, arg) RP block 
     {{ name_v = $2; args_v = Array.of_list $4; body_v = $6 }}
