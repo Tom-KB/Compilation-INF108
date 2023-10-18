@@ -1,20 +1,28 @@
 
 type register = 
-  | A0 | A1 | V0 | RA | SP | GP | FP | T of int | S of int | Zero
+  | A0 | A1 | V0 | RA | SP | GP | FP | T of int | S of int | Zero | Lo
 
 type address =
   | Alab of string
   | Areg of int * register
 
-type arith = Add | Sub | Mul | Div
 
 type instruction =
   | Move of register * register
   | Li of register * int
   | Lw of register * address
   | Sw of register * address
-  | Arith of arith * register * register * register
-  | Arithi of arith * register * register * int
+  | Add of register * register * register
+  | Addi of register * register * int
+  | Sub of register * register * register
+  | Mult of register * register
+  | Div of register * register
+  | Or of register * register * register
+  | And of register * register * register
+  | Xor of register * register * register
+  | Nor of register * register * register
+  | Slt of register * register * register
+  | Slti of register * register * int
   | Jal of string
   | J of string
   | Jr of register
@@ -67,7 +75,7 @@ let string_instruction = function
   | Arith (op, dst, src, src2) ->
      "\t"^(string_arith op)^"\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
   | Arithi (op, dst, src, src2) ->
-     "\t"^(string_arith op)^"\t"^(string_register dst)^","^(string_register src)^","^(string_of_int src2)
+     "\t"^(string_arith op)^"\t"^)(string_register dst)^","^(string_register src)^","^(string_of_int src2)
   | Jal s -> "\tjal\t"^s
   | J s -> "\tj\t"^s
   | Jr r -> "\tjr\t"^(string_register r)
