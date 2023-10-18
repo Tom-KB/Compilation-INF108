@@ -1,6 +1,6 @@
 
 type register = 
-  | A0 | A1 | V0 | RA | SP | GP | FP | T of int | S of int | Zero | Lo
+  | A0 | A1 | V0 | RA | SP | GP | FP | T of int | S of int | Zero | Hi | Lo
 
 type address =
   | Alab of string
@@ -49,8 +49,11 @@ let string_register = function
   | SP -> "$sp"
   | FP -> "$fp"
   | GP -> "$gp"
-  | T i -> "$t"^(string_of_int i )
-  | S i -> "$t"^(string_of_int i )
+  | T i -> "$t"^(string_of_int i)
+  | S i -> "$t"^(string_of_int i)
+  | Zero -> "$zero"
+  | Hi -> "$hi"
+  | Lo -> "$lo"
          
 let string_arith = function
   | Add -> "add"
@@ -72,10 +75,28 @@ let string_instruction = function
     "\tlw\t"^(string_register r)^","^(string_address a)
   | Sw (r, a) ->
      "\tsw\t"^(string_register r)^","^(string_address a)
-  | Arith (op, dst, src, src2) ->
-     "\t"^(string_arith op)^"\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
-  | Arithi (op, dst, src, src2) ->
-     "\t"^(string_arith op)^"\t"^)(string_register dst)^","^(string_register src)^","^(string_of_int src2)
+  | Add (dst, src, src2) ->
+     "\tadd\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+  | Addi (dst, src, src2) ->
+     "\taddi\t"^)(string_register dst)^","^(string_register src)^","^(string_of_int src2)
+  | Sub (dst, src, src2) ->
+     "\tsub\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+  | Mult (src, src2) ->
+     "\tmult\t"^(string_register src)^","^(string_register src2)
+  | Div (src, src2) ->
+     "\tdiv\t"^(string_register src)^","^(string_register src2)
+  | Or (dst, src, src2) ->
+     "\tor\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+  | And (dst, src, src2) ->
+     "\tand\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+  | Xor (dst, src, src2) ->
+     "\txor\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+  | Nor (dst, src, src2) ->
+     "\tnor\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+  | Slt (dst, src, src2) ->
+     "\tslt\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+  | Slti (dst, src, src2) ->
+     "\tslti\t"^)(string_register dst)^","^(string_register src)^","^(string_of_int src2)
   | Jal s -> "\tjal\t"^s
   | J s -> "\tj\t"^s
   | Jr r -> "\tjr\t"^(string_register r)
