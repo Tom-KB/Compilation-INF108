@@ -6,22 +6,21 @@ type address =
   | Alab of string
   | Areg of int * register
 
-
 type instruction =
   | Move of register * register
-  | Li of register * int
-  | Lw of register * address
-  | Sw of register * address
-  | Add of register * register * register
+  | Li   of register * int
+  | Lw   of register * address
+  | Sw   of register * address
+  | Add  of register * register * register
   | Addi of register * register * int
-  | Sub of register * register * register
+  | Sub  of register * register * register
   | Mult of register * register
-  | Div of register * register
-  | Or of register * register * register
-  | And of register * register * register
-  | Xor of register * register * register
-  | Nor of register * register * register
-  | Slt of register * register * register
+  | Div  of register * register
+  | Or   of register * register * register
+  | And  of register * register * register
+  | Xor  of register * register * register
+  | Nor  of register * register * register
+  | Slt  of register * register * register
   | Slti of register * register * int
   | Jal of string
   | J of string
@@ -34,12 +33,11 @@ type data =
   | Asciiz of string * string
   | Word of string * int
 
-type program = {
+type mips_program = {
   text : instruction list;
   data : data list;
 }
 
-open Format
 
 let string_register = function
   | A0 -> "$a0"
@@ -55,12 +53,6 @@ let string_register = function
   | Hi -> "$hi"
   | Lo -> "$lo"
          
-let string_arith = function
-  | Add -> "add"
-  | Sub -> "sub"
-  | Mul -> "mul"
-  | Div -> "div"
-
 let string_address = function
   | Alab s ->  s
   | Areg (ofs, r) -> (string_of_int ofs)^"("^(string_register r)^")"
@@ -78,7 +70,7 @@ let string_instruction = function
   | Add (dst, src, src2) ->
      "\tadd\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
   | Addi (dst, src, src2) ->
-     "\taddi\t"^)(string_register dst)^","^(string_register src)^","^(string_of_int src2)
+     "\taddi\t"^(string_register dst)^","^(string_register src)^","^(string_of_int src2)
   | Sub (dst, src, src2) ->
      "\tsub\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
   | Mult (src, src2) ->
@@ -96,7 +88,7 @@ let string_instruction = function
   | Slt (dst, src, src2) ->
      "\tslt\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
   | Slti (dst, src, src2) ->
-     "\tslti\t"^)(string_register dst)^","^(string_register src)^","^(string_of_int src2)
+     "\tslti\t"^(string_register dst)^","^(string_register src)^","^(string_of_int src2)
   | Jal s -> "\tjal\t"^s
   | J s -> "\tj\t"^s
   | Jr r -> "\tjr\t"^(string_register r)

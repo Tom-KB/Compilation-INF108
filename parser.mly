@@ -1,6 +1,5 @@
-/* Analyseur syntaxique Compilateur */
-
 %{
+  (* Code OCaml *)
   open Ast
 %}
  
@@ -28,13 +27,16 @@
    la précédence d'un opérateur unaire. Utile à savoir plus tard pour le "*" et les pointeurs. */
 %nonassoc uminus
 
-/* Point d'entrée de la grammaire */
+/* Cela définit une fonction OCaml "Parser.file",
+  "file" étant une règle définit plus bas.
+*/
 %start file
 
-/* Type des valeurs retournées par l'analyseur syntaxique */
+/* "file" renvoit un objet de type "Ast.program" */
 %type <Ast.program> file 
 
 %%
+/* règles avec syntaxe se rapprochant de celle des grammaires. */
 
 file: obj* EOF { $1 }
 ;
@@ -42,32 +44,26 @@ file: obj* EOF { $1 }
 typ:
   | INT  { Int }
   | CHAR { Char }
+  | VOID { Void }
   ;
 
 arg: typ IDENT {($1, $2)}
+;
 
 obj:
-  | func   { F $1 }
-  | func_v { Fv $1 }
+  | func { F $1 }
   ;
 
 func: typ IDENT LP separated_list(COMMA, arg) RP block 
-    {{ typ = $1; name = $2; args = Array.of_list $4; body = $6 }}
+    {{ typ = $1; name = $2; args = Array.of_list $4; body = Block $6, $startpos }}
 ;
-func_v: VOID IDENT LP separated_list(COMMA, arg) RP block 
-    {{ name_v = $2; args_v = Array.of_list $4; body_v = $6 }}
-;
-
-block:
-  | LCB stmt* RCB { Block $2, $startpos }
-  ;
 
 left_value:
   | IDENT { Var $1 }
   ;
 
 simple_stmt:  
-  | typ IDENT { Def ($1, $2), $startpos }
+  | typ IDENT { Def($1, $2), $startpos }
   | left_value EQ expr { Assign($1, $3), $startpos } 
   | IDENT LP separated_list(COMMA, expr) RP { Scall($1, Array.of_list $3), $startpos }
   | RETURN expr { Return $2, $startpos }
@@ -75,6 +71,11 @@ simple_stmt:
 
 stmt:
   | simple_stmt SEMICOLON { $1 }
+  | block SEMICOLON?      { Block $1, $startpos }
+  ;
+
+block:
+  | LCB stmt* RCB { $2 }
   ;
 
 expr:
