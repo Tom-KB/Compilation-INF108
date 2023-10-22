@@ -5,7 +5,7 @@
   exception Lexing_error of char
     
   let kwd_tbl = ["&&",AND; "true",TRUE;"false",FALSE; "int", INT; "char", CHAR; "void", VOID;
-                 "!",NOT; "||",OR ;"return",RETURN; "NULL",NULL ]
+                 "!",NOT; "||",OR ;"return",RETURN;  ] (* "NULL", NULL; *)
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 
   let newline lexbuf =
@@ -14,12 +14,6 @@
       { pos with pos_lnum = pos.pos_lnum + 1; pos_bol = pos.pos_cnum }
 
   let pile = ref [0]
-
-  let rec nouv n = match !pile with
-    | a::q when a < n -> pile:=n::a::q;[BEGIN]
-    | a::q when a > n -> pile:=q;END::(nouv n)
-    | _a::_q -> []
-    | [] -> failwith "1"
 
   let desescape s =
     let rec foo i =
@@ -49,7 +43,7 @@ let chaine = ([^'\"']|'\\''\n'|'\\''\"')*
 
 rule first = parse
   | space* '\n' { newline lexbuf ; first lexbuf }
-  | space* as esp { NEWLINE::nouv (String.length esp) }
+  (* | space* { first lexbuf } Si erreur, regardez ici ! *)
 and token = parse
   | '\n' { newline lexbuf ; first lexbuf }
   | space+ { token lexbuf }
@@ -69,15 +63,15 @@ and token = parse
   | ')'     { [RP] }
   | '{'     { [LCB] }
   | '}'     { [RCB] }
-  | '['     { [LB] }
-  | ']'     { [RB] }
+  (* | '['     { [LB] }
+  | ']'     { [RB] } *)
   | '<''='  { [LEQ] }
   | '>''='  { [GEQ] }
   | '<'  { [LE] }
   | '>'  { [GE] }
-  | integer as s { [CST (s)] }
-  | eof     { [NEWLINE;EOF] }
-  | '\"' (chaine as s) '\"' { [STR(desescape s)] }  
+  | integer as s { [INTEGER (int_of_string(s))] } (* Vérifier si c'est la bonne méthode à adopter *)
+  | eof     { [EOF] }
+  (* | '\"' (chaine as s) '\"' { [STR(desescape s)] }   *)
   | _ as c  { raise (Lexing_error c) }
 
 
