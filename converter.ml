@@ -104,7 +104,7 @@ let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Sysc
 
 (* Compilation d'un stmt *)
 (* stmt -> instruction list -> instruction list *)
-(* TODO : Le return, le Scall, la verification de type quand on aura les chars *)
+(* TODO : Le return, le Scall, la verification de type avec Def et Assign*)
 let rec compile_stmt stmt_node acc = match stmt_node with
  | Def (_, x) -> acc |> (add_to_pile x)
  | Assign (Var x, exp) -> acc |> (compile_expr exp) |> (assign x)
