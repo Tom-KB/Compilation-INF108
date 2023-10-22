@@ -2,9 +2,10 @@
  (modules lexer))
 (menhir
  (modules parser))
-(library
-  (name compilo)
-  (modules parser ast)
-  (libraries unix)
-)
-
+(executable
+ (name converter)
+ (promote (until-clean))
+ (modules lexer parser ast ast_mips converter)
+ (flags ()))
+  
+  
