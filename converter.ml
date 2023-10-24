@@ -5,6 +5,7 @@ open Ast_mips
 let pile = ref []
 let push x = (pile := x :: !pile)
 let pop () = (pile := List.tl !pile)
+let tab_fonctions= Hashtbl.create 97
 
 let rec index x acc = function
   | [] -> failwith "Erreur" (*raise (VarUndef x)*)
@@ -83,7 +84,10 @@ let rec compile_expr ex acc = match ex with
  | Not e ->
    acc
    |> (compile_expr e)
-   |> (~:(Slti (T 1, A0, 0)))
+   |> (~:(Slti (T 1, A0, 0)))|> ~:(While !var_locales >0 do
+   rem_from_pile;
+   decr var_locales;
+)
    |> (~:(Slt (A0, Zero, A0)))
    |> (~:(Nor (A0, A0, T 1)))
  | Op (o, e1, e2) ->
@@ -94,7 +98,7 @@ let rec compile_expr ex acc = match ex with
    |> (~:(Lw (A1, Areg (0, SP)))) (* on met le res de e1 dans A1 *)
    |> rem_from_pile
    |> (apply o A1 A0)
- | Ecall (f, arg) ->
+ | Ecall (f, arg) -> assert ((Hashtbl.find tab_fonctions f) <> Void);
    acc
    |> (compile_expr arg.(0))
    |> (~:(Jal f))
@@ -106,17 +110,31 @@ let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Sysc
 (* stmt -> instruction list -> instruction list *)
 (* TODO : Le return, le Scall, la verification de type avec Def et Assign*)
 let rec compile_stmt stmt_node acc = match stmt_node with
- | Def (_, x) -> acc |> (add_to_pile x)
+ | Def (_, x) -> acc |> (add_to_pile x) 
  | Assign (Var x, exp) -> acc |> (compile_expr exp) |> (assign x)
  | Scall ("print_int", [|e|]) -> acc |> (compile_expr e) |> print
- | Scall _ -> failwith "fonction void non définie"
- | Block lst -> List.fold_left (fun a (s, _) -> compile_stmt s a) acc lst
+ | Scall (f, _) -> assert ((Hashtbl.find tab_fonctions f) = Void); failwith "fonction non définie"
+ | Block lst -> let def, acc' = List.fold_left (fun (def, acc') (s, _) -> (def+if_def s,compile_stmt s a)) acc lst in
+  List.fold_left (fun x, _-> rem_from_pile x) acc' (List.init def (fun i-> i))
  | Return _ -> failwith "TODO"
 
 
 (* TODO *)
 (* func -> instruction list -> instruction list *)
-let compile_obj = ()
+let compile_obj objet instructions= match objet with
+    | F(f) ->Hashtbl.add tab_fonctions f.name f.typ; instructions
+      |> ~:(Label f.name)
+      |> (add_to_pile (snd arg.(0)))
+      |> (assign (snd arg.(0)))
+      |> ~: (Move(A0, RA))
+      |> (add_to_pile "0RA")
+      |> (assign "0RA")
+      |> (compile_stmt f.body)
+      |> ~:(Lw(RA, Areg(0, SP)))
+      |> rem_from_pile
+      |>  rem_from_pile
+      |> ~: (Jr RA)
+    | V( _t, _name) -> failwith "pas fait"
 
 
 (* Renvoie la liste des objets (type program) d'un code C en string *)
@@ -126,4 +144,5 @@ let parse (s (*code C*) : string) : program =
 
 
 (* TODO *)
-let compile_program = ()
+let compile_program s =
+  List.rev (List.fold_left compile_obj [] (parse s))
