@@ -7,8 +7,10 @@ type address =
   | Areg of int * register
 
 type instruction =
-  |Mflo of register
-  |Mfhi of register
+  | Sltu of register*register*register
+  | Sltiu of register*register*int
+  | Mflo of register
+  | Mfhi of register
   | Move of register * register
   | Li   of register * int
   | Lw   of register * address
@@ -62,6 +64,10 @@ let string_address = function
 let string_instruction = function
   | Move (dst, src) -> 
       "\tmove\t"^(string_register dst)^", "^(string_register src)
+  | Sltu (dst, src, src2) ->
+         "\tsltu\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
+   | Sltiu (dst, src, entier) ->
+      "\tsltiu\t"^(string_register dst)^","^(string_register src)^","^(string_of_int entier)
   |Mflo(dst) -> "\tmflo\t"^(string_register dst)
   |Mfhi(dst)-> "\tmfhi\t"^(string_register dst)
   | Li (r, i) ->

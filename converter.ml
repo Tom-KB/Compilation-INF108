@@ -50,8 +50,8 @@ let apply (o : binop) r1 r2 =
     | Le  -> [Slt  (A0, r1, r2)]
     | Geq -> [Sub  (A0, r2, r1); Slti (A0, A0, 1)]
     | Ge  -> [Slt  (A0, r2, r1)]
-    | Neq -> [Xor  (A0, r1, r2)]
-    | Eq  -> [Xor  (A0, r1, r2); Mult (A0, A0); Mflo(A0); Slt (A0, Zero, A0)]
+    | Neq -> [Xor  (A0, r1, r2); Sltu(A0, Zero, A0)]
+    | Eq  -> [Sub(A0, r1, r2); Sltiu(A0, A0, 1)]
     | And -> [And  (A0, r1, r2)]
     | Or  -> [Or   (A0, r1, r2)])
 
@@ -120,7 +120,7 @@ let rec compile_stmt stmt_node acc = match stmt_node with
     |> (~:(Jal f))
  | Block lst -> let def, acc' = List.fold_left (fun (def, acc') (s, _) -> (def+if_def s,compile_stmt s acc')) (0,acc) lst in
   List.fold_left (fun x _-> rem_from_pile x) acc' (List.init def (fun i-> i))
- | Return _ -> failwith "TODO"
+ | Return e -> compile_expr e acc
 
 
 (* TODO *)

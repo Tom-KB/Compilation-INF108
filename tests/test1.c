@@ -1,4 +1,3 @@
-
 int f(int x){
     print_int(3);
     return x;
