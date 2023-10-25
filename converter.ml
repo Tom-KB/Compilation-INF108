@@ -5,7 +5,11 @@ open Ast_mips
 let pile = ref []
 let push x = (pile := x :: !pile)
 let pop () = (pile := List.tl !pile)
-let tab_fonctions= Hashtbl.create 97
+
+(* Table de Hashage contenant les fonctions *)
+(* (key, value) -> (nomFonction, type func)  *)
+let funcHashT = Hashtbl.create 20 
+
 
 let rec index x acc = function
   | [] -> failwith "Erreur" (*raise (VarUndef x)*)
@@ -98,9 +102,9 @@ let rec compile_expr ex acc = match ex with
    |> (~:(Lw (A1, Areg (0, SP)))) (* on met le res de e1 dans A1 *)
    |> rem_from_pile
    |> (apply o A1 A0)
- | Ecall (f, arg) -> assert ((Hashtbl.find tab_fonctions f) <> Void);
+ | Ecall (f, args) -> assert ((Hashtbl.find funcHashT f) <> Void);
    acc
-   |> (compile_expr arg.(0))
+   |> (compile_expr args.(0))
    |> (~:(Jal f))
 
 (* print int et print newline (code ascii de newline =  11) *)
@@ -112,8 +116,8 @@ let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Sysc
 let rec compile_stmt stmt_node acc = match stmt_node with
  | Def (_, x) -> acc |> (add_to_pile x) 
  | Assign (Var x, exp) -> acc |> (compile_expr exp) |> (assign x)
- | Scall ("print_int", [|e|]) -> acc |> (compile_expr e) |> print
- | Scall (f, _) -> assert ((Hashtbl.find tab_fonctions f) = Void); failwith "fonction non définie"
+ | Scall ("print_int", [|e|]) -> acc |> (compile_expr e) |> print |> (~:(Jal f))
+ | Scall (f, args) -> acc |> (compile_expr args.(0)) |> (~:(Jal f))
  | Block lst -> let def, acc' = List.fold_left (fun (def, acc') (s, _) -> (def+if_def s,compile_stmt s a)) acc lst in
   List.fold_left (fun x, _-> rem_from_pile x) acc' (List.init def (fun i-> i))
  | Return _ -> failwith "TODO"
@@ -122,7 +126,7 @@ let rec compile_stmt stmt_node acc = match stmt_node with
 (* TODO *)
 (* func -> instruction list -> instruction list *)
 let compile_obj objet instructions= match objet with
-    | F(f) ->Hashtbl.add tab_fonctions f.name f.typ; instructions
+    | F(f) ->Hashtbl.add funcHashT f.name f.typ; instructions
       |> ~:(Label f.name)
       |> (add_to_pile (snd arg.(0)))
       |> (assign (snd arg.(0)))
@@ -132,7 +136,7 @@ let compile_obj objet instructions= match objet with
       |> (compile_stmt f.body)
       |> ~:(Lw(RA, Areg(0, SP)))
       |> rem_from_pile
-      |>  rem_from_pile
+      |> rem_from_pile
       |> ~: (Jr RA)
     | V( _t, _name) -> failwith "pas fait"
 
@@ -144,5 +148,6 @@ let parse (s (*code C*) : string) : program =
 
 
 (* TODO *)
-let compile_program s =
-  List.rev (List.fold_left compile_obj [] (parse s))
+let compile_program s ofile =
+  let p = {data = []; text = Label "main" :: List.rev (List.fold_left compile_obj [] (parse s))} in
+  Ast_mips.print_program p ofile
