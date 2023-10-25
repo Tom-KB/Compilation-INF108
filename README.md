@@ -24,6 +24,8 @@ TODO:
 
 -BUG: if (1) int x; ne compile pas en C mais compile pour nous
 
+-BUG: int x; int x; ne passe pas en C car la variable est déclaré deux fois (on peut ignorer ce bug)
+
 -BUG: variables globales dans le segment "data"
 
 -BUG: vérifier qu'il y a un main et qu'il est bien à la fin
