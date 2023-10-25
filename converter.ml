@@ -116,8 +116,8 @@ let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Sysc
 let rec compile_stmt stmt_node acc = match stmt_node with
  | Def (_, x) -> acc |> (add_to_pile x) 
  | Assign (Var x, exp) -> acc |> (compile_expr exp) |> (assign x)
- | Scall ("print_int", [|e|]) -> acc |> (compile_expr e) |> print |> (~:(Jal f))
- | Scall (f, args) -> acc |> (compile_expr args.(0)) |> (~:(Jal f))
+ | Scall ("print_int", [|e|]) -> acc |> (compile_expr e) |> prints
+ | Scall (f, args) -> assert ((Hashtbl.find funcHashT f) = Void); acc |> (compile_expr args.(0)) |> (~:(Jal f))
  | Block lst -> let def, acc' = List.fold_left (fun (def, acc') (s, _) -> (def+if_def s,compile_stmt s a)) acc lst in
   List.fold_left (fun x, _-> rem_from_pile x) acc' (List.init def (fun i-> i))
  | Return _ -> failwith "TODO"
