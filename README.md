@@ -16,6 +16,6 @@ Converter:
 
 -acc devient instr
 
-Lexer:
+Parser:
 
 -Bug du "dangling else" corrigé (IF suivi d'un If ELSE est ambigu car on sait pas a quel IF le ELSE est relié)
