@@ -28,6 +28,8 @@ TODO:
 
 -commentaires
 
+-If et IfElse crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels
+
 -tester tous les opérateurs
 
 -système d'erreur de syntaxe
