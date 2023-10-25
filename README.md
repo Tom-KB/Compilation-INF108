@@ -22,7 +22,7 @@ Parser:
 
 TODO:
 
--BUG: if (1) int x; créer une variable locale x en dehors du if. A gérer au niveau du Parser en faisant un Block.
+-BUG: if (1) int x; ne compile pas en C mais compile pour nous
 
 -BUG: variables globales dans le segment "data"
 
