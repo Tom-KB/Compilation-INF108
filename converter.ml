@@ -1,15 +1,12 @@
 open Ast
 open Ast_mips
 
+exception VarUndef of string
 (* représente la pile SP *)
 let pile = ref []
 let push x = (pile := x :: !pile)
 let pop () = (pile := List.tl !pile)
-
-(* Table de Hashage contenant les fonctions *)
-(* (key, value) -> (nomFonction, type func)  *)
-let funcHashT = Hashtbl.create 20 
-
+let tab_fonctions= Hashtbl.create 97
 
 let rec index x acc = function
   | [] -> failwith "Erreur" (*raise (VarUndef x)*)
@@ -30,7 +27,7 @@ en mettant la valeur du booléen associé au premier x à true dans la pile*)
 let assign x acc =
   let cnt = ref 0 in
   let rec modifielist = function
-    | [] -> failwith "variable non définie"
+    | [] -> raise (VarUndef(x))
     | (_, y) :: t when y = x -> (true, y) :: t
     |  h :: t-> incr cnt; h :: modifielist t
   in
@@ -46,15 +43,15 @@ let apply (o : binop) r1 r2 =
    (match o with
     | Add -> [Add  (A0, r1, r2)]
     | Sub -> [Sub  (A0, r1, r2)]
-    | Mul -> [Mult (r1, r2); Move (A0, Lo)]
-    | Div -> [Div  (r1, r2); Move (A0, Lo)]
-    | Mod -> [Div  (r1, r2); Move (A0, Hi)]
+    | Mul -> [Mult (r1, r2); Mflo (A0)]
+    | Div -> [Div  (r1, r2); Mflo (A0)]
+    | Mod -> [Div  (r1, r2); Mfhi(A0)]
     | Leq -> [Sub  (A0, r1, r2); Slti (A0, A0, 1)]
     | Le  -> [Slt  (A0, r1, r2)]
     | Geq -> [Sub  (A0, r2, r1); Slti (A0, A0, 1)]
     | Ge  -> [Slt  (A0, r2, r1)]
     | Neq -> [Xor  (A0, r1, r2)]
-    | Eq  -> [Xor  (A0, r1, r2); Mult (A0, A0); Slt (A0, Zero, Lo)]
+    | Eq  -> [Xor  (A0, r1, r2); Mult (A0, A0); Mflo(A0); Slt (A0, Zero, A0)]
     | And -> [And  (A0, r1, r2)]
     | Or  -> [Or   (A0, r1, r2)])
 
@@ -88,66 +85,67 @@ let rec compile_expr ex acc = match ex with
  | Not e ->
    acc
    |> (compile_expr e)
-   |> (~:(Slti (T 1, A0, 0)))|> ~:(While !var_locales >0 do
-   rem_from_pile;
-   decr var_locales;
-)
+   |> (~:(Slti (T 1, A0, 0)))
    |> (~:(Slt (A0, Zero, A0)))
    |> (~:(Nor (A0, A0, T 1)))
  | Op (o, e1, e2) ->
    acc
    |> (compile_expr e1)
    |> (add_to_pile "1") (* on ajoute le res de e1 sous forme de variable nommé 1 *)
+   |> (assign "1")
    |> (compile_expr e2)
    |> (~:(Lw (A1, Areg (0, SP)))) (* on met le res de e1 dans A1 *)
    |> rem_from_pile
    |> (apply o A1 A0)
- | Ecall (f, args) -> assert ((Hashtbl.find funcHashT f) <> Void);
+ | Ecall (f, arg) -> assert ((Hashtbl.find tab_fonctions f) <> Void);
    acc
-   |> (compile_expr args.(0))
+   |> (compile_expr arg.(0))
    |> (~:(Jal f))
 
 (* print int et print newline (code ascii de newline =  11) *)
 let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Syscall]
 
+let if_def s= match s with  
+  | Def(_)-> 1
+  | _ -> 0
 (* Compilation d'un stmt *)
 (* stmt -> instruction list -> instruction list *)
 (* TODO : Le return, le Scall, la verification de type avec Def et Assign*)
 let rec compile_stmt stmt_node acc = match stmt_node with
  | Def (_, x) -> acc |> (add_to_pile x) 
  | Assign (Var x, exp) -> acc |> (compile_expr exp) |> (assign x)
- | Scall ("print_int", [|e|]) -> acc |> (compile_expr e) |> prints
- | Scall (f, args) -> assert ((Hashtbl.find funcHashT f) = Void); acc |> (compile_expr args.(0)) |> (~:(Jal f))
- | Block lst -> let def, acc' = List.fold_left (fun (def, acc') (s, _) -> (def+if_def s,compile_stmt s a)) acc lst in
-  List.fold_left (fun x, _-> rem_from_pile x) acc' (List.init def (fun i-> i))
+ | Scall ("print_int", [|e|]) -> acc |> (compile_expr e) |> print
+ | Scall (f, args) -> assert ((Hashtbl.find tab_fonctions f) = Void);  acc
+    |> (compile_expr args.(0))
+    |> (~:(Jal f))
+ | Block lst -> let def, acc' = List.fold_left (fun (def, acc') (s, _) -> (def+if_def s,compile_stmt s acc')) (0,acc) lst in
+  List.fold_left (fun x _-> rem_from_pile x) acc' (List.init def (fun i-> i))
  | Return _ -> failwith "TODO"
 
 
 (* TODO *)
 (* func -> instruction list -> instruction list *)
 let compile_obj objet instructions= match objet with
-    | F(f) ->Hashtbl.add funcHashT f.name f.typ; instructions
+    | F(f) ->Hashtbl.add tab_fonctions f.name f.typ; instructions
       |> ~:(Label f.name)
-      |> (add_to_pile (snd arg.(0)))
-      |> (assign (snd arg.(0)))
+      |> (add_to_pile (snd f.args.(0)))
+      |> (assign (snd f.args.(0)))
       |> ~: (Move(A0, RA))
       |> (add_to_pile "0RA")
       |> (assign "0RA")
-      |> (compile_stmt f.body)
+      |> (compile_stmt (f.body))
       |> ~:(Lw(RA, Areg(0, SP)))
       |> rem_from_pile
-      |> rem_from_pile
+      |>  rem_from_pile
       |> ~: (Jr RA)
     | V( _t, _name) -> failwith "pas fait"
 
 
 (* Renvoie la liste des objets (type program) d'un code C en string *)
 (* file = nom du %start dans parser.mly *)
-let parse (s (*code C*) : string) : program =
-  Parser.file Lexer.read (Lexing.from_string s)
 
 
-(* TODO *)
 let compile_program s ofile =
-  let p = {data = []; text = Label "main" :: List.rev (List.fold_left compile_obj [] (parse s))} in
-  Ast_mips.print_program p ofile
+  let p= {data= []; text=(J "main") :: List.rev (List.fold_left (fun a b -> compile_obj b a) [] (s))}
+in
+Ast_mips.print_program p ofile

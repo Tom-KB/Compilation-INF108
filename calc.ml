@@ -60,7 +60,7 @@ let () =
        n'est d�tect�e.
        La fonction Lexer.token est utilis�e par Parser.prog pour obtenir 
        le prochain token. *)
-    let p = Parser.prog Lexer.token buf in
+    let p = Parser.file Lexer.read buf in
     close_in f;
     
     (* On s'arr�te ici si on ne veut faire que le parsing *)
@@ -69,9 +69,9 @@ let () =
     (* Compilation de l'arbre de syntaxe abstraite p. Le code machine 
        r�sultant de cette transformation doit �tre �crit dans le fichier 
        cible ofile. *)
-    Compile.compile_program p !ofile
+    Converter.compile_program p !ofile
   with
-    | Lexer.Lexing_error c -> 
+   | Lexer.Lexing_error c -> 
 	(* Erreur lexicale. On r�cup�re sa position absolue et 
 	   on la convertit en num�ro de ligne *)
 	localisation (Lexing.lexeme_start_p buf);
@@ -83,12 +83,12 @@ let () =
 	localisation (Lexing.lexeme_start_p buf);
 	eprintf "Erreur dans l'analyse syntaxique@.";
 	exit 1
-    | Compile.VarUndef s-> 
+   | Converter.VarUndef s-> 
 	(* Erreur d'utilisation de variable pendant la compilation *)
 	eprintf 
 	  "Erreur de compilation: la variable %s n'est pas d�finie@." s;
 	exit 1
-	
+
 
 
 

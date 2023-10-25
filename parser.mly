@@ -55,7 +55,7 @@ obj:
   ;
 
 func: typ IDENT LP separated_list(COMMA, arg) RP block 
-    {{ typ = $1; name = $2; args = Array.of_list $4; body = Block $6, $startpos }}
+    {{ typ = $1; name = $2; args = Array.of_list $4; body = Block $6}}
 ;
 
 left_value:

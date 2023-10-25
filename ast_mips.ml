@@ -1,12 +1,14 @@
 
 type register = 
-  | A0 | A1 | V0 | RA | SP | GP | FP | T of int | S of int | Zero | Hi | Lo
+  | A0 | A1 | V0 | RA | SP | GP | FP | T of int | S of int | Zero 
 
 type address =
   | Alab of string
   | Areg of int * register
 
 type instruction =
+  |Mflo of register
+  |Mfhi of register
   | Move of register * register
   | Li   of register * int
   | Lw   of register * address
@@ -50,8 +52,7 @@ let string_register = function
   | T i -> "$t"^(string_of_int i)
   | S i -> "$t"^(string_of_int i)
   | Zero -> "$zero"
-  | Hi -> "$hi"
-  | Lo -> "$lo"
+
          
 let string_address = function
   | Alab s ->  s
@@ -61,6 +62,8 @@ let string_address = function
 let string_instruction = function
   | Move (dst, src) -> 
       "\tmove\t"^(string_register dst)^", "^(string_register src)
+  |Mflo(dst) -> "\tmflo\t"^(string_register dst)
+  |Mfhi(dst)-> "\tmfhi\t"^(string_register dst)
   | Li (r, i) ->
      "\tli\t"^(string_register r)^", "^(string_of_int i)
   | Lw (r, a) ->
