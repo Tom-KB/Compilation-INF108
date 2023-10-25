@@ -23,9 +23,17 @@
 %nonassoc LE LEQ GE GEQ EQQ NEQ
 %left PLUS MINUS 
 %left TIMES DIV MOD
+
 /* Le "%prec uminus" dans la règle expr donne au moins (déjà utile pour l'opération binaire)
    la précédence d'un opérateur unaire. Utile à savoir plus tard pour le "*" et les pointeurs. */
 %nonassoc uminus
+
+/* Cela sert juste à fixer le problème d'ambiguïté du "dangling ELSE",
+   aka le problème lorsqu'un IF est suivi d'un IF ELSE,
+   il y a une ambiguïté sur quel IF est associé au ELSE.
+*/
+%nonassoc then_
+%nonassoc ELSE
 
 /* Cela définit une fonction OCaml "Parser.file",
   "file" étant une règle définit plus bas.
@@ -47,16 +55,16 @@ typ:
   | VOID { Void }
   ;
 
-arg: typ IDENT {($1, $2)}
+arg: typ IDENT { ($1, $2) }
 ;
 
 obj:
   | func { F $1 }
-  | typ IDENT SEMICOLON {V ($1, $2)}
+  | typ IDENT SEMICOLON { V($1, $2) }
   ;
 
 func: typ IDENT LP separated_list(COMMA, arg) RP block 
-    {{ typ = $1; name = $2; args = Array.of_list $4; body = Block $6}}
+    { { typ = $1; name = $2; args = Array.of_list $4; body = Block $6} }
 ;
 
 left_value:
@@ -73,8 +81,8 @@ simple_stmt:
 stmt:
   | simple_stmt SEMICOLON { $1 }
   | block SEMICOLON?      { Block $1, $startpos }
-  | IF LP expr RP stmt { If($3, fst $5), $startpos}
-  | IF LP expr RP stmt ELSE stmt{ IfElse($3, fst $5, fst $7), $startpos}
+  | IF LP expr RP stmt %prec then_ { If($3, fst $5), $startpos }
+  | IF LP expr RP stmt ELSE stmt   { IfElse($3, fst $5, fst $7), $startpos }
   ;
 
 block:
