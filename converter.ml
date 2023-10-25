@@ -1,12 +1,14 @@
 open Ast
 open Ast_mips
 
+exception Return of instruction list
 exception VarUndef of string
 (* représente la pile SP *)
 let pile = ref []
 let push x = (pile := x :: !pile)
 let pop () = (pile := List.tl !pile)
 let tab_fonctions= Hashtbl.create 97
+let id_if = ref 0 
 
 let rec index x acc = function
   | [] -> failwith "Erreur" (*raise (VarUndef x)*)
@@ -97,17 +99,18 @@ let rec compile_expr ex acc = match ex with
    |> (~:(Lw (A1, Areg (0, SP)))) (* on met le res de e1 dans A1 *)
    |> rem_from_pile
    |> (apply o A1 A0)
- | Ecall (f, arg) -> assert ((Hashtbl.find tab_fonctions f) <> Void);
+  | Ecall (f, args) -> assert ((Hashtbl.find tab_fonctions f) <> Void);
    acc
-   |> (compile_expr arg.(0))
+   |> (compile_expr args.(0))
    |> (~:(Jal f))
 
-(* print int et print newline (code ascii de newline =  11) *)
-let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Syscall]
 
 let if_def s= match s with  
   | Def(_)-> 1
   | _ -> 0
+
+
+let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Syscall]
 (* Compilation d'un stmt *)
 (* stmt -> instruction list -> instruction list *)
 (* TODO : Le return, le Scall, la verification de type avec Def et Assign*)
@@ -120,25 +123,57 @@ let rec compile_stmt stmt_node acc = match stmt_node with
     |> (~:(Jal f))
  | Block lst -> let def, acc' = List.fold_left (fun (def, acc') (s, _) -> (def+if_def s,compile_stmt s acc')) (0,acc) lst in
   List.fold_left (fun x _-> rem_from_pile x) acc' (List.init def (fun i-> i))
- | Return e -> compile_expr e acc
+ | Return e -> let lst = compile_expr e acc in raise (Return lst)
+ | If(condition, reste) ->let acc'=(Beq(A0, Zero, "suite"^(string_of_int (!id_if))))::(compile_expr condition acc) in
+      let res = (Label ("suite"^(string_of_int (!id_if))))::(compile_stmt reste acc') in
+        incr id_if; 
+        res
+ | IfElse(condition,int_if, int_else) ->let acc'=(Beq (A0, Zero, "else"^(string_of_int (!id_if) ) ) )::(compile_expr condition acc) in
+        let res = (Label ("else" ^ (string_of_int (!id_if) ) ) )::(Bne(A0, Zero, "suite"^(string_of_int (!id_if) ) ) )::(compile_stmt int_if acc') in
+        let final =(Label ("suite" ^ (string_of_int (!id_if) ) ) )::( compile_stmt int_else res) in
+          incr id_if; 
+          final
 
 
 (* TODO *)
 (* func -> instruction list -> instruction list *)
-let compile_obj objet instructions= match objet with
-    | F(f) ->Hashtbl.add tab_fonctions f.name f.typ; instructions
+let compile_obj objet instructions = match objet with
+    | F(f) ->
+      Hashtbl.add tab_fonctions f.name f.typ; 
+      let lst = instructions
       |> ~:(Label f.name)
       |> (add_to_pile (snd f.args.(0)))
       |> (assign (snd f.args.(0)))
       |> ~: (Move(A0, RA))
       |> (add_to_pile "0RA")
-      |> (assign "0RA")
-      |> (compile_stmt (f.body))
-      |> ~:(Lw(RA, Areg(0, SP)))
-      |> rem_from_pile
-      |>  rem_from_pile
-      |> ~: (Jr RA)
-    | V( _t, _name) -> failwith "pas fait"
+      |> (assign "0RA") in
+
+      if (f.typ = Void) then
+        (
+          try
+            (compile_stmt (f.body) lst)
+            |> ~:(Lw(RA, Areg(0, SP)))
+            |> rem_from_pile
+            |>  rem_from_pile
+            |> ~: (Jr RA)
+          with
+            | Return l -> failwith "Return in void function" 
+        )
+      else
+        (
+          try
+            ignore (compile_stmt (f.body) lst);
+            failwith "Non void function with no return"
+          with
+            | Return l -> l
+        
+          |> ~:(Lw(RA, Areg(0, SP)))
+          |> rem_from_pile
+          |>  rem_from_pile
+          |> ~: (Jr RA) 
+          )
+    | V(t, name) -> instructions |> (add_to_pile name) 
+
 
 
 (* Renvoie la liste des objets (type program) d'un code C en string *)
@@ -146,6 +181,6 @@ let compile_obj objet instructions= match objet with
 
 
 let compile_program s ofile =
-  let p= {data= []; text=(J "main") :: List.rev (List.fold_left (fun a b -> compile_obj b a) [] (s))}
+  let p= {data= []; text=(J "main") :: List.rev ((Syscall)::(Li(V0, 10))::List.fold_left (fun a b -> compile_obj b a) [] (s))}
 in
 Ast_mips.print_program p ofile

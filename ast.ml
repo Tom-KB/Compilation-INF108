@@ -12,6 +12,8 @@ and stmt_node =
   | Scall of string * expr array (* print_int(1); *)
   | Block of stmt list
   | Return of expr (* return 1 *)
+  | If of expr* stmt_node
+  | IfElse of expr * stmt_node * stmt_node
 and left_value =
   | Var of string
 and expr =

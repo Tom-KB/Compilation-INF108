@@ -8,7 +8,7 @@
 %token INT /* à ne pas confondre avec INTEGER qui est un entier */
 %token CHAR
 %token VOID
-%token NOT OR AND TRUE FALSE
+%token NOT OR AND TRUE FALSE IF ELSE
 %token RETURN
 %token EOF COMMA SEMICOLON
 %token LP RP LCB RCB
@@ -52,6 +52,7 @@ arg: typ IDENT {($1, $2)}
 
 obj:
   | func { F $1 }
+  | typ IDENT SEMICOLON {V ($1, $2)}
   ;
 
 func: typ IDENT LP separated_list(COMMA, arg) RP block 
@@ -72,6 +73,8 @@ simple_stmt:
 stmt:
   | simple_stmt SEMICOLON { $1 }
   | block SEMICOLON?      { Block $1, $startpos }
+  | IF LP expr RP stmt { If($3, fst $5), $startpos}
+  | IF LP expr RP stmt ELSE stmt{ IfElse($3, fst $5, fst $7), $startpos}
   ;
 
 block:

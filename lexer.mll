@@ -5,7 +5,7 @@
   open Parser
   exception Lexing_error of char
     
-  let kwd_tbl = ["true", TRUE; "false", FALSE; "int", INT; "char", CHAR; "void", VOID;"return", RETURN]
+  let kwd_tbl = ["true", TRUE; "false", FALSE; "int", INT; "char", CHAR; "void", VOID;"return", RETURN; "if", IF; "else", ELSE]
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }
 
