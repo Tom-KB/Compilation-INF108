@@ -22,15 +22,15 @@ Parser:
 
 TODO:
 
-- if (1) intx; créer une vraible locale en degors du if. A gérer au niveau du Parser en faisant un Block.
+-BUG: if (1) intx; créer une vraible locale en degors du if. A gérer au niveau du Parser en faisant un Block.
 
--variables globales dans le segment "data"
+-BUG: variables globales dans le segment "data"
 
--vérifier qu'il y a un main et qu'il est bien à la fin
+-BUG: vérifier qu'il y a un main et qu'il est bien à la fin
 
 -commentaires
 
--If et IfElse crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels
+-BUG: If et IfElse crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels
 
 -tester tous les opérateurs
 
