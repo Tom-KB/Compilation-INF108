@@ -26,6 +26,8 @@ TODO:
 
 -vérifier qu'il y a un main et qu'il est bien à la fin
 
+-commentaires
+
 -tester tous les opérateurs
 
 -système d'erreur de syntaxe
