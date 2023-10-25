@@ -4,6 +4,8 @@ Lien MIPS ["https://peterfab.com/ref/mips/MIPSir.html"]
 
 
 TODO
--Return
+-Return qui abrege le code
+
 -Fonction non void doivent avoir un Return
+
 -Dernière fonction doit toujours être main
