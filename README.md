@@ -22,6 +22,8 @@ Parser:
 
 TODO:
 
+- if (1) intx; créer une vraible locale en degors du if. A gérer au niveau du Parser en faisant un Block.
+
 -variables globales dans le segment "data"
 
 -vérifier qu'il y a un main et qu'il est bien à la fin
