@@ -16,6 +16,8 @@ Converter:
 
 -acc devient instr
 
+-Le return marche avec les if
+
 -On vérifie que main est bien à la fin
 
 Parser:
