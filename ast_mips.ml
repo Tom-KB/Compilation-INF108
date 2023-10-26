@@ -16,6 +16,7 @@ type instruction =
   | Move of register * register
   | Li   of register * int
   | Lw   of register * address
+  | La   of register * address
   | Sw   of register * address
   | Add  of register * register * register
   | Addi of register * register * int
@@ -74,12 +75,14 @@ let string_instruction = function
          "\tsltu\t"^(string_register dst)^","^(string_register src)^","^(string_register src2)
    | Sltiu (dst, src, entier) ->
       "\tsltiu\t"^(string_register dst)^","^(string_register src)^","^(string_of_int entier)
-  |Mflo(dst) -> "\tmflo\t"^(string_register dst)
-  |Mfhi(dst)-> "\tmfhi\t"^(string_register dst)
+  | Mflo(dst) -> "\tmflo\t"^(string_register dst)
+  | Mfhi(dst)-> "\tmfhi\t"^(string_register dst)
   | Li (r, i) ->
      "\tli\t"^(string_register r)^", "^(string_of_int i)
   | Lw (r, a) ->
     "\tlw\t"^(string_register r)^","^(string_address a)
+  | La (r, a) ->
+    "\tla\t"^(string_register r)^","^(string_address a)
   | Sw (r, a) ->
      "\tsw\t"^(string_register r)^","^(string_address a)
   | Add (dst, src, src2) ->
@@ -126,4 +129,3 @@ let print_program p out_filename =
   add "\t.data";
   List.iter (fun e -> string_data e |> add ) p.data ;
   close_out out_file
-
