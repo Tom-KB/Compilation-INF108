@@ -8,13 +8,13 @@
 %token INT /* à ne pas confondre avec INTEGER qui est un entier */
 %token CHAR
 %token VOID
-%token NOT OR AND TRUE FALSE
+%token NOT OR AND TRUE FALSE IF ELSE
 %token RETURN
 %token EOF COMMA SEMICOLON
 %token LP RP LCB RCB
 %token PLUS MINUS TIMES DIV MOD
 %token EQ EQQ
-%token LEQ GEQ LE GE NEQ
+%token LEQ GEQ LE GE NEQ AMP
 
 /* Définitions des priorités et associativités des tokens */
 %left OR
@@ -23,9 +23,17 @@
 %nonassoc LE LEQ GE GEQ EQQ NEQ
 %left PLUS MINUS 
 %left TIMES DIV MOD
+
 /* Le "%prec uminus" dans la règle expr donne au moins (déjà utile pour l'opération binaire)
    la précédence d'un opérateur unaire. Utile à savoir plus tard pour le "*" et les pointeurs. */
 %nonassoc uminus
+%nonassoc AMP
+/* Cela sert juste à fixer le problème d'ambiguïté du "dangling ELSE",
+   aka le problème lorsqu'un IF est suivi d'un IF ELSE,
+   il y a une ambiguïté sur quel IF est associé au ELSE.
+*/
+%nonassoc then_
+%nonassoc ELSE
 
 /* Cela définit une fonction OCaml "Parser.file",
   "file" étant une règle définit plus bas.
@@ -45,17 +53,19 @@ typ:
   | INT  { Int }
   | CHAR { Char }
   | VOID { Void }
+  | typ TIMES { P($1) }
   ;
 
-arg: typ IDENT {($1, $2)}
+arg: typ IDENT { ($1, $2) }
 ;
 
 obj:
   | func { F $1 }
+  | typ IDENT SEMICOLON { V($1, $2) }
   ;
 
 func: typ IDENT LP separated_list(COMMA, arg) RP block 
-    {{ typ = $1; name = $2; args = Array.of_list $4; body = Block $6, $startpos }}
+    { { typ = $1; name = $2; args = Array.of_list $4; body = Block $6} }
 ;
 
 left_value:
@@ -72,6 +82,8 @@ simple_stmt:
 stmt:
   | simple_stmt SEMICOLON { $1 }
   | block SEMICOLON?      { Block $1, $startpos }
+  | IF LP expr RP stmt %prec then_ { If($3, fst $5), $startpos }
+  | IF LP expr RP stmt ELSE stmt   { IfElse($3, fst $5, fst $7), $startpos }
   ;
 
 block:
@@ -79,6 +91,8 @@ block:
   ;
 
 expr:
+  | AMP left_value                 { Address $2}
+  | TIMES left_value  %prec uminus { ValPointer $2}
   | INTEGER                        { I $1 }
   | TRUE                           { I 1 }
   | FALSE                          { I 0 }
