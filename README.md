@@ -16,6 +16,8 @@ Converter:
 
 -acc devient instr
 
+-On vérifie que main est bien à la fin
+
 Parser:
 
 -Bug du "dangling else" corrigé (IF suivi d'un If ELSE est ambigu car on sait pas a quel IF le ELSE est relié)
@@ -23,8 +25,6 @@ Parser:
 -Bug du if (1) int x; qui compile (alors que ca devrait pas) est corrigé
 
 TODO:
-
--BUG: vérifier qu'il y a un main et qu'il est bien à la fin
 
 -commentaires
 
