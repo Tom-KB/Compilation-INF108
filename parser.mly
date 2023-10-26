@@ -72,18 +72,22 @@ left_value:
   ;
 
 simple_stmt:  
-  | typ IDENT { Def($1, $2), $startpos }
   | left_value EQ expr { Assign($1, $3), $startpos } 
   | IDENT LP separated_list(COMMA, expr) RP { Scall($1, Array.of_list $3), $startpos }
   | RETURN expr { Return $2, $startpos }
   ;
 
-stmt:
+no_declare_stmt:
   | simple_stmt SEMICOLON { $1 }
   | block SEMICOLON?      { Block $1, $startpos }
-  | IF LP expr RP stmt %prec then_ { If($3, fst $5), $startpos }
-  | IF LP expr RP stmt ELSE stmt   { IfElse($3, fst $5, fst $7), $startpos }
+  | IF LP expr RP no_declare_stmt %prec then_          { If($3, fst $5), $startpos }
+  | IF LP expr RP no_declare_stmt ELSE no_declare_stmt { IfElse($3, fst $5, fst $7), $startpos }
   ;
+
+/* cela sert à éviter de faire compiler if (1) int x; */
+stmt:
+  | typ IDENT SEMICOLON { Def($1, $2), $startpos }
+  | no_declare_stmt { $1 }
 
 block:
   | LCB stmt* RCB { $2 }
