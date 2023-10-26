@@ -3,7 +3,7 @@ type pos = Lexing.position
 
 type program = obj list
 and obj = F of func | V of t * string
-and func = { typ : t; name : string; args : (t * string) array; body : stmt }
+and func = { typ : t; name : string; args : (t * string) array; body : stmt_node }
 and t = Void | Int | Char | P of t
 and stmt = stmt_node * pos
 and stmt_node =
@@ -12,9 +12,13 @@ and stmt_node =
   | Scall of string * expr array (* print_int(1); *)
   | Block of stmt list
   | Return of expr (* return 1 *)
+  | If of expr* stmt_node
+  | IfElse of expr * stmt_node * stmt_node
 and left_value =
   | Var of string
 and expr =
+  | ValPointer of expr
+  | Address of left_value
   | I of int
   | Val of left_value
   | Moins of expr
