@@ -20,13 +20,9 @@ Parser:
 
 -Bug du "dangling else" corrigé (IF suivi d'un If ELSE est ambigu car on sait pas a quel IF le ELSE est relié)
 
+-Bug du if (1) int x; qui compile (alors que ca devrait pas) est corrigé
+
 TODO:
-
--BUG: if (1) int x; ne compile pas en C mais compile pour nous
-
--BUG: int x; int x; ne passe pas en C car la variable est déclaré deux fois (on peut ignorer ce bug)
-
--BUG: variables globales dans le segment "data"
 
 -BUG: vérifier qu'il y a un main et qu'il est bien à la fin
 
@@ -53,3 +49,10 @@ TODO:
 -string
 
 -struct
+
+
+Remarque:
+
+-BUG: int x; int x; ne passe pas en C car la variable est déclaré deux fois (on peut ignorer ce bug)
+
+-data est tout le temps vide sinon c'est galère
