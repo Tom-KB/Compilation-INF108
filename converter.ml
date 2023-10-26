@@ -202,13 +202,19 @@ let compile_obj objet instr = match objet with
     else return := false; r_prec := false; r
 
 
+let rec compile_prog prog instr = match prog with
+  | [] -> failwith "programme vide"
+  | [F f] when f.name = "main" -> J "main" :: List.rev_append (compile_obj (F f) instr) [Li(V0, 10); Syscall]
+  | [_] -> failwith "Dernier objet non main"
+  | obj :: t -> compile_prog t (compile_obj obj instr)
+
+
 (* Renvoie la liste des objets (type program) d'un code C en string *)
 (* file = nom du %start dans parser.mly *)
 
 
 let compile_program p ofile =
-  let text = List.rev_append (List.fold_left (fun a b -> compile_obj b a) [] p) [Li(V0, 10); Syscall] in
   Ast_mips.print_program {
       data = [];
-      text = J "main" :: text;
+      text = compile_prog p [];
     } ofile
