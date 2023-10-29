@@ -1,16 +1,13 @@
 open Ast
 open Ast_mips
 
-exception Return of instruction list
+exception To_Return of instruction list
 exception VarUndef of string
 
 (* représente la pile SP *)
 let pile = ref []
 let push x = (pile := x :: !pile)
 let pop () = (pile := List.tl !pile)
-let func_actuelle = ref { typ = Int; name = "f"; args = [| (Int, "a")|] ; body = Def(Int, "b") }
-let return = ref false
-let r_prec = ref false 
 
 (* table de hachage sui stocke les fonctions *)
 let tab_fonctions= Hashtbl.create 97
@@ -107,63 +104,43 @@ let rec compile_expr ex instr = match ex with
      |> (rem_from_pile 1)
      |> (apply o A1 A0)
   | Ecall(f, args) ->
-     assert ((Hashtbl.find tab_fonctions f) <> Void);
+     let typ = Hashtbl.find tab_fonctions f in
+     assert (typ <> Void);
      instr
      |> (compile_expr args.(0))
      |> ~:(Jal f)
 
 
-let if_def = function
-  | Def _ -> 1
-  | _ -> 0
-
-
 let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Syscall]
+let return instr = Jr RA :: rem_from_pile 2 (Lw(RA, Areg(0, SP)) :: instr)
 
 (* Compilation d'un stmt *)
 (* stmt -> instruction list -> instruction list *)
 (* TODO : Le return, le Scall, la verification de type avec Def et Assign*)
-let rec compile_stmt stmt_node instr = match stmt_node with
+let rec compile_stmt void d stmt_node instr = match stmt_node with
   | Def(_, x) -> instr |> (add_to_pile x) 
   | Assign(Var x, exp) -> instr |> (compile_expr exp) |> (assign x)
   | Scall("print_int", args) ->
      assert (Array.length args = 1);
      instr |> (compile_expr args.(0)) |> print
   | Scall(f, args) ->
-     assert (Hashtbl.find tab_fonctions f = Void);
+     let typ = Hashtbl.find tab_fonctions f in
+     assert (typ = Void);
      instr
      |> (compile_expr args.(0))
      |> ~:(Jal f)
-  | Block lst -> (let count = ref 0 in
-     (* On compte les defs et on retire le même
-        nombre de variable de la pile que de defs *)
-        try(
-            let d, instr' =
-              List.fold_left (fun (d, instr') (s, _) -> count:= !count + if_def s;
-                  let res= (d + if_def s, compile_stmt s instr') in             
-                    return := !r_prec || ! return; 
-                    r_prec := false;
-                    res
-                ) (0, instr) lst in
-            rem_from_pile d instr')
-        with
-          | Return e -> (let f = !func_actuelle in return := true;
-                        if f.typ <> Void then (e
-                          |> (rem_from_pile (!count))
-                          |> ~:(Lw(RA, Areg(0, SP)))
-                          |> ~:(Addi(SP,SP, 8))
-                          |> ~:(Jr RA)
-                          )
-                        else failwith " return in a void function" )
-        )
-  | Return e -> raise (Return (compile_expr e instr))
+  | Block lst -> compile_block void d lst instr
+  | Return e ->
+    if void
+    then failwith "Return in void function"
+    else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return
   | If(e, stmt) ->
      incr id_if;
      let suite = "suite" ^ (string_of_int !id_if) in
      instr
      |> (compile_expr e)
      |> ~:(Beq(A0, Zero, suite))
-     |> (compile_stmt stmt)
+     |> (compile_stmt void d stmt)
      |> ~:(Label suite)
   | IfElse(e, stmt1, stmt2) ->
      incr id_if;
@@ -172,20 +149,25 @@ let rec compile_stmt stmt_node instr = match stmt_node with
      instr
      |> (compile_expr e)
      |> ~:(Beq(A0, Zero, else_))
-     |> (compile_stmt stmt1)
-     |> ~:(r_prec := !return; return := false; Bne(A0, Zero, suite))
+     |> (compile_stmt void d stmt1)
+     |> ~:(J suite)
      |> ~:(Label else_)
-     |> (compile_stmt stmt2)
-     |> ~:(r_prec := !return && !r_prec; return := false;Label suite)
+     |> (compile_stmt void d stmt1)
+     |> ~:(Label suite)
+
+(* On compte les defs et on retire le même
+   nombre de variable de la pile que de defs *)
+and compile_block void d lst instr = match lst with
+ | [] -> instr |> (rem_from_pile d)         
+ | (Def _ as h, _) :: t -> instr |> (compile_stmt void (d+1) h) |> (compile_block void (d+1) t)
+ | (h, _) :: t -> instr |> (compile_stmt void d h) |> (compile_block void d t)
 
 
 (* func -> instruction list -> instruction list *)
 let compile_obj objet instr = match objet with
   | V(t, name) -> instr |> (add_to_pile name) 
   | F f ->
-    Hashtbl.add tab_fonctions f.name f.typ; 
-    func_actuelle:= f;
-    let r =
+    Hashtbl.add tab_fonctions f.name f.typ;
     instr
       |> ~:(Label f.name)
       |> (add_to_pile (snd f.args.(0)))
@@ -193,13 +175,8 @@ let compile_obj objet instr = match objet with
       |> ~:(Move(A0, RA))
       |> (add_to_pile "0RA")
       |> (assign "0RA")
-      |> (compile_stmt f.body )
-      |> ~:(Lw(RA, Areg(0, SP)))
-      |> (rem_from_pile 2)
-      |> ~:(Jr RA)
-    in
-    if f.typ <> Void && !return=false then failwith "Non void function doesn't always return"
-    else return := false; r_prec := false; r
+      |> (compile_stmt (f.typ = Void) 0 f.body)
+      |> return
 
 
 let rec compile_prog prog instr = match prog with

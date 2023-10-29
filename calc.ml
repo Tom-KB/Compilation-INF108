@@ -35,11 +35,11 @@ let () =
   Arg.parse options (set_file ifile) usage;
 
   (* On v�rifie que le nom du fichier source a bien �t� indiqu� *)
-  if !ifile="" then begin eprintf "Aucun fichier � compiler\n@?"; exit 1 end; 
+  if !ifile="" then begin eprintf "Aucun fichier à compiler\n@?"; exit 1 end; 
 
   (* Ce fichier doit avoir l'extension .exp *)
   if not (Filename.check_suffix !ifile ".c") then begin
-    eprintf "Le fichier d'entr�e doit avoir l'extension .c\n@?";
+    eprintf "Le fichier d'entrée doit avoir l'extension .c\n@?";
     Arg.usage options usage;
     exit 1
   end;
@@ -75,18 +75,18 @@ let () =
 	(* Erreur lexicale. On r�cup�re sa position absolue et 
 	   on la convertit en num�ro de ligne *)
 	localisation (Lexing.lexeme_start_p buf);
-	eprintf "Erreur dans l'analyse lexicale: %c@." c;
+	eprintf "Erreur dans l'analyse lexicale:\n Char %c, Ascii code: %d@." c (Char.code c);
 	exit 1
     | Parser.Error -> 
-	(* Erreur syntaxique. On r�cup�re sa position absolue et on la 
-	   convertit en num�ro de ligne *)
+	(* Erreur syntaxique. On récupère sa position absolue et on la 
+	   convertit en numéro de ligne *)
 	localisation (Lexing.lexeme_start_p buf);
 	eprintf "Erreur dans l'analyse syntaxique@.";
 	exit 1
    | Converter.VarUndef s-> 
 	(* Erreur d'utilisation de variable pendant la compilation *)
 	eprintf 
-	  "Erreur de compilation: la variable %s n'est pas d�finie@." s;
+	  "Erreur de compilation: la variable %s n'est pas définie@." s;
 	exit 1
 
 

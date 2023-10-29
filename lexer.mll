@@ -13,7 +13,14 @@
 
 let letter = ['a'-'z' 'A'-'Z' '_']
 let digit = ['0'-'9']
+
 let space = [' ' '\t' '\n']
+(* \r de code ASCII 13, apparait sans aucune raison dans tous les codes *)
+let carriage_return = '\r'
+let comment1 = "/*" ([^'*'] | '*' [^'/'])* "*/"
+let comment2 = "//" [^'\n']* '\n'
+
+let ignore = space | carriage_return | comment1 | comment2
 
 let ident = letter (letter | digit)*
 let integer = digit+
@@ -27,7 +34,8 @@ let integer = digit+
    la suite du lexbuf pour aller checher le prochain token.
 *)
 rule read = parse
-  | space   { read lexbuf }
+  | '\n' { read lexbuf }
+  | ignore   { read lexbuf }
   | ident as id { id_or_kwd id }
   | ';'     { SEMICOLON }
   | ','     { COMMA }

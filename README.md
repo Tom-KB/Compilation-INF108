@@ -16,15 +16,25 @@ Converter:
 
 -acc devient instr
 
--Le return marche avec les if
-
 -On vérifie que main est bien à la fin
+
+-certaines fonctionnalités de MARCHE PAS encore quand il y a des IF et des RETURN
 
 Parser:
 
 -Bug du "dangling else" corrigé (IF suivi d'un If ELSE est ambigu car on sait pas a quel IF le ELSE est relié)
 
 -Bug du if (1) int x; qui compile (alors que ca devrait pas) est corrigé
+
+Lexer:
+
+-ajout des commentaires // ... \n et /* ... */
+
+-ajout du charactères \r dans les caractères ignorés
+
+Calc/
+
+-L'erreur d'analyse lexicale print le code ascii en plus
 
 TODO:
 
