@@ -17,7 +17,6 @@ f:
 	lw	$ra,0($sp)
 	addi	$sp,$sp,8
 	jr	$ra
-	addi	$sp,$sp,0
 	lw	$ra,0($sp)
 	addi	$sp,$sp,8
 	jr	$ra

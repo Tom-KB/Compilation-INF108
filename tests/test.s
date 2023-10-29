@@ -57,7 +57,6 @@ main:
 	li	$v0, 11
 	li	$a0, 10
 	syscall
-	addi	$sp,$sp,0
 	lw	$ra,0($sp)
 	addi	$sp,$sp,8
 	jr	$ra

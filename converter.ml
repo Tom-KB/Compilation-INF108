@@ -3,24 +3,23 @@ open Ast_mips
 
 exception To_Return of instruction list
 exception VarUndef of string
-
 (* représente la pile SP *)
 let pile = ref []
 let push x = (pile := x :: !pile)
 let pop () = (pile := List.tl !pile)
 
 (* table de hachage sui stocke les fonctions *)
-let tab_fonctions= Hashtbl.create 97
+let tab_fonctions = Hashtbl.create 13
 
 (* compteur d'instruction If/IfElse *)
 let id_if = ref 0 
 
-let rec index x instr = function
+let rec index x acc = function
   | [] -> raise (VarUndef x)
   | (b, h) :: t ->
      if h = x
-     then (if b then instr else failwith "variable non assigné")
-     else index x (instr+1) t
+     then (if b then acc else failwith "variable non assigné")
+     else index x (acc+1) t
 
 (* renvoie la valeur associé à la variable x*)
 let value (x : string) = Areg(4*index x 0 !pile, SP)
@@ -39,8 +38,14 @@ let assign x instr =
   in
   pile := modifielist !pile; Sw(A0, Areg(4* !cnt, SP)) :: instr
 
-(* retire les i premiers éléments du haut de la pile *)
-let rem_from_pile i instr = for _=1 to i do pop () done; Addi(SP, SP, 4*i) :: instr
+(* retire les i dernières variables définies
+   d'abord dans le compilateur
+   puis dans MIPS *)
+let rem_from_pile i instr =
+  if i < 1 then instr
+  else
+  (for _ = 1 to i do pop () done;
+   Addi(SP, SP, 4*i) :: instr)
 
 (* transforme une instruction en fonction *)
 let ( ~: ) x instr = x :: instr
@@ -112,12 +117,12 @@ let rec compile_expr ex instr = match ex with
 
 
 let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Syscall]
-let return instr = Jr RA :: rem_from_pile 2 (Lw(RA, Areg(0, SP)) :: instr)
-let return' instr = Jr RA :: Addi (SP, SP, 8) :: Lw(RA, Areg(0, SP)) :: instr
+let return = List.rev_append [Lw(RA, Areg(0, SP)); Addi (SP, SP, 8); Jr RA]
 
 (* Compilation d'un stmt *)
-(* stmt -> instruction list -> instruction list *)
-(* TODO : Le return, le Scall, la verification de type avec Def et Assign*)
+(* stmt -> bool -> int -> instruction list -> instruction list *)
+(* void est booléen indiquant si la fonction qui contient stmt est void
+   d est le nombre de variables locales définies avant *)
 let rec compile_stmt void d stmt_node instr = match stmt_node with
   | Def(_, x) -> instr |> (add_to_pile x) 
   | Assign(Var x, exp) -> instr |> (compile_expr exp) |> (assign x)
@@ -134,7 +139,7 @@ let rec compile_stmt void d stmt_node instr = match stmt_node with
   | Return e ->
     if void
     then failwith "Return in void function"
-    else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return'
+    else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return
   | If(e, stmt) ->
      incr id_if;
      let suite = "suite" ^ (string_of_int !id_if) in
@@ -159,14 +164,14 @@ let rec compile_stmt void d stmt_node instr = match stmt_node with
 (* On compte les defs et on retire le même
    nombre de variable de la pile que de defs *)
 and compile_block void d lst instr = match lst with
- | [] -> instr |> (rem_from_pile d)         
+ | [] -> rem_from_pile d instr     
  | (Def _ as h, _) :: t -> instr |> (compile_stmt void (d+1) h) |> (compile_block void (d+1) t)
  | (h, _) :: t -> instr |> (compile_stmt void d h) |> (compile_block void d t)
 
 
 (* func -> instruction list -> instruction list *)
-let compile_obj objet instr = match objet with
-  | V(t, name) -> instr |> (add_to_pile name) 
+let compile_obj obj instr = match obj with
+  | V(_, name) -> add_to_pile name instr
   | F f ->
     Hashtbl.add tab_fonctions f.name f.typ;
     instr
@@ -177,7 +182,9 @@ let compile_obj objet instr = match objet with
       |> (add_to_pile "0RA")
       |> (assign "0RA")
       |> (compile_stmt (f.typ = Void) 0 f.body)
-      |> return
+      |> ~:(Lw(RA, Areg(0, SP)))
+      |> (rem_from_pile 2)
+      |> ~:(Jr RA)
 
 
 let rec compile_prog prog instr = match prog with
