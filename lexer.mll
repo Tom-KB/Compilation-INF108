@@ -2,6 +2,8 @@
   (* Ici on défini tout le code OCaml executé avant le Lexer.
      Le "open Parser" permet de définir les tokens.
   *)
+
+  (*modifications lignes 51 et 52 *)
   open Parser
   exception Lexing_error of char
     
@@ -45,6 +47,10 @@ let integer = digit+
 *)
 rule read = parse
   | ignore  { read lexbuf }
+    (*ajout pour gérer les commentaires*)
+  | "/*" * "*/" {read lexbuf}  
+  | "//" * '\n' {read lexbuf} 
+  (* fin ajout commentaires*)
   | ident as id { id_or_kwd id }
   | ';'     { SEMICOLON }
   | ','     { COMMA }

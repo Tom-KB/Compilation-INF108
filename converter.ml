@@ -1,3 +1,20 @@
+(*-------------------------------------------------------------------------------------------------
+                                             Liste des modifications
+- ligne 35
+- lignes 135 - 139
+- ligne 145
+- lignes 161 - 166
+- ligne 173
+- lignes 210 - 216
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+*)
+
 open Ast
 open Ast_mips
 
@@ -13,6 +30,9 @@ let tab_fonctions = Hashtbl.create 13
 
 (* compteur d'instruction If/IfElse *)
 let id_if = ref 0 
+
+(*ajouté*)
+let nb_var_func= ref 0
 
 let rec index x acc = function
   | [] -> raise (VarUndef x)
@@ -109,15 +129,20 @@ let rec compile_expr ex instr = match ex with
      |> (rem_from_pile 1)
      |> (apply o A1 A0)
   | Ecall(f, args) ->
-     let typ = Hashtbl.find tab_fonctions f in
+     let typ, nb = Hashtbl.find tab_fonctions f in
      assert (typ <> Void);
+     (*modifié*)
+     assert ( Array.length args = nb);
      instr
-     |> (compile_expr args.(0))
+     |> ( fun liste ->
+            Array.fold_left (fun acc x ->Sw(A0, Areg(0, SP))::Addi(SP, SP, -4)::(compile_expr  x acc)  ) liste args
+         )
      |> ~:(Jal f)
 
 
 let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Syscall]
-let return = List.rev_append [Lw(RA, Areg(0, SP)); Addi (SP, SP, 8); Jr RA]
+(*modifié*)
+let return x = List.rev_append [Lw(RA, Areg(0, SP)); Addi (SP, SP, 4*( 1 + x)); Jr RA]
 
 (* Compilation d'un stmt *)
 (* stmt -> bool -> int -> instruction list -> instruction list *)
@@ -130,16 +155,22 @@ let rec compile_stmt void d stmt_node instr = match stmt_node with
      assert (Array.length args = 1);
      instr |> (compile_expr args.(0)) |> print
   | Scall(f, args) ->
-     let typ = Hashtbl.find tab_fonctions f in
+     let typ, nb = Hashtbl.find tab_fonctions f in
      assert (typ = Void);
+     (*modifié*)
+     assert ( Array.length args = nb);
      instr
-     |> (compile_expr args.(0))
-     |> ~:(Jal f)
+     (* modifié*)
+     |> ( fun liste ->
+         Array.fold_left (fun acc x ->Sw(A0, Areg(0, SP))::Addi(SP, SP, -4)::(compile_expr  x acc)  ) liste args
+      )
+     |> ~:( Jal f)
   | Block lst -> compile_block void d lst instr
   | Return e ->
     if void
     then failwith "Return in void function"
-    else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return
+    (* modifié*)
+    else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return (!nb_var_func)
   | If(e, stmt) ->
      incr id_if;
      let suite = "suite" ^ (string_of_int !id_if) in
@@ -172,18 +203,17 @@ and compile_block void d lst instr = match lst with
 (* func -> instruction list -> instruction list *)
 let compile_obj obj instr = match obj with
   | V(_, name) -> add_to_pile name instr
-  | F f ->
-    Hashtbl.add tab_fonctions f.name f.typ;
+  | F f -> (* fonction modifiée*)
+    nb_var_func:= Array.length f.args; 
+    Hashtbl.add tab_fonctions f.name (f.typ, !nb_var_func);
     instr
-      |> ~:(Label f.name)
-      |> (add_to_pile (snd f.args.(0)))
-      |> (assign (snd f.args.(0)))
+      |> ~:( Array.iter (fun x -> push (true, snd x)) f.args; Label f.name)
       |> ~:(Move(A0, RA))
       |> (add_to_pile "0RA")
       |> (assign "0RA")
       |> (compile_stmt (f.typ = Void) 0 f.body)
       |> ~:(Lw(RA, Areg(0, SP)))
-      |> (rem_from_pile 2)
+      |> (rem_from_pile (1+ !nb_var_func)) 
       |> ~:(Jr RA)
 
 
