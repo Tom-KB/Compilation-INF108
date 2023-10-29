@@ -5,7 +5,16 @@
   open Parser
   exception Lexing_error of char
     
-  let kwd_tbl = ["true", TRUE; "false", FALSE; "int", INT; "char", CHAR; "void", VOID;"return", RETURN; "if", IF; "else", ELSE]
+  let kwd_tbl = [
+  "true", TRUE;
+  "false", FALSE;
+  "int", INT;
+  "char", CHAR;
+  "void", VOID;
+  "return", RETURN;
+  "if", IF;
+  "else", ELSE;
+  ]
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }
 
@@ -13,7 +22,15 @@
 
 let letter = ['a'-'z' 'A'-'Z' '_']
 let digit = ['0'-'9']
+
 let space = [' ' '\t' '\n']
+(* \r de code ASCII 13, apparait sans aucune raison dans tous les codes *)
+let carriage_return = '\r'
+let comment1 = "/*" ([^'*'] | '*' [^'/'])* "*/"
+let comment2 = "//" [^'\n']* '\n'
+let comment = comment1 | comment2
+
+let ignore = space | carriage_return | comment
 
 let ident = letter (letter | digit)*
 let integer = digit+
@@ -27,29 +44,30 @@ let integer = digit+
    la suite du lexbuf pour aller checher le prochain token.
 *)
 rule read = parse
-  | space   { read lexbuf }
+  | ignore  { read lexbuf }
   | ident as id { id_or_kwd id }
   | ';'     { SEMICOLON }
   | ','     { COMMA }
   | '+'     { PLUS }
-  | '!''='  { NEQ }
+  | "!="    { NEQ }
   | '-'     { MINUS }
   | '*'     { TIMES }
   | '/'     { DIV }
   | '%'     { MOD }
-  | '=''='  { EQQ }
+  | "=="    { EQQ }
   | '='     { EQ }
   | '!'     { NOT }
-  | '&''&'  { AND }
-  | '|''|'  { OR }
+  | "&&"    { AND }
+  | "||"    { OR }
   | '('     { LP }
   | ')'     { RP }
   | '{'     { LCB }
   | '}'     { RCB }
-  | '<''='  { LEQ }
-  | '>''='  { GEQ }
+  | "<="    { LEQ }
+  | ">="    { GEQ }
   | '<'     { LE }
   | '>'     { GE }
+  | '&'     { AMP }
   | integer as s { INTEGER (int_of_string s) }
   | eof     { EOF } 
   | _ as c  { raise (Lexing_error c) }

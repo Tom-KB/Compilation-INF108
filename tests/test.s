@@ -58,7 +58,8 @@ main:
 	li	$a0, 10
 	syscall
 	lw	$ra,0($sp)
-	addi	$sp,$sp,4
-	addi	$sp,$sp,4
+	addi	$sp,$sp,8
 	jr	$ra
+	li	$v0, 10
+	syscall
 	.data

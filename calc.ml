@@ -1,12 +1,11 @@
 (* 
 Fichier principal du compilateur d'expression
-(inspir� de JC Filli�tre
 *)
 
 open Format
 open Lexing
 
-(* Option de compilation, pour s'arr�ter � l'issue du parser *)
+(* Option de compilation, pour s'arrêter à l'issue du parser *)
 let parse_only = ref false
 
 (* Noms des fichiers source et cible *)
@@ -34,59 +33,58 @@ let () =
   (* Parsing de la ligne de commande *)
   Arg.parse options (set_file ifile) usage;
 
-  (* On v�rifie que le nom du fichier source a bien �t� indiqu� *)
-  if !ifile="" then begin eprintf "Aucun fichier � compiler\n@?"; exit 1 end; 
+  (* On vérifie que le nom du fichier source a bien été indiqué *)
+  if !ifile="" then begin eprintf "Aucun fichier à compiler\n@?"; exit 1 end; 
 
   (* Ce fichier doit avoir l'extension .exp *)
   if not (Filename.check_suffix !ifile ".c") then begin
-    eprintf "Le fichier d'entr�e doit avoir l'extension .c\n@?";
+    eprintf "Le fichier d'entrée doit avoir l'extension .c\n@?";
     Arg.usage options usage;
     exit 1
   end;
 
-  (* Par d�faut, le fichier cible a le m�me nom que le fichier source, 
+  (* Par défaut, le fichier cible a le même nom que le fichier source, 
      seule l'extension change *)
   if !ofile="" then ofile := Filename.chop_suffix !ifile ".c" ^ ".s";
   
   (* Ouverture du fichier source en lecture *)
   let f = open_in !ifile in
     
-  (* Cr�ation d'un tampon d'analyse lexicale *)
+  (* Création d'un tampon d'analyse lexicale *)
   let buf = Lexing.from_channel f in
   
   try
     (* Parsing: la fonction  Parser.prog transforme le tampon lexical en un 
        arbre de syntaxe abstraite si aucune erreur (lexicale ou syntaxique) 
-       n'est d�tect�e.
-       La fonction Lexer.token est utilis�e par Parser.prog pour obtenir 
+       n'est détectée.
+       La fonction Lexer.token est utilisée par Parser.prog pour obtenir 
        le prochain token. *)
     let p = Parser.file Lexer.read buf in
     close_in f;
     
-    (* On s'arr�te ici si on ne veut faire que le parsing *)
+    (* On s'arrête ici si on ne veut faire que le parsing *)
     if !parse_only then exit 0;
     
     (* Compilation de l'arbre de syntaxe abstraite p. Le code machine 
-       r�sultant de cette transformation doit �tre �crit dans le fichier 
+       résultant de cette transformation doit être écrit dans le fichier 
        cible ofile. *)
     Converter.compile_program p !ofile
   with
    | Lexer.Lexing_error c -> 
-	(* Erreur lexicale. On r�cup�re sa position absolue et 
-	   on la convertit en num�ro de ligne *)
+	 (* Erreur lexicale. On récupère sa position absolue et 
+	    on la convertit en numéro de ligne *)
 	localisation (Lexing.lexeme_start_p buf);
-	eprintf "Erreur dans l'analyse lexicale: %c@." c;
+	eprintf "Erreur dans l'analyse lexicale:\n\t Char: %c, Ascii code: %d.@." c (Char.code c);
 	exit 1
     | Parser.Error -> 
-	(* Erreur syntaxique. On r�cup�re sa position absolue et on la 
-	   convertit en num�ro de ligne *)
+	   (* Erreur syntaxique. On récupère sa position absolue et on la 
+	      convertit en numéro de ligne *)
 	localisation (Lexing.lexeme_start_p buf);
-	eprintf "Erreur dans l'analyse syntaxique@.";
+	eprintf "Erreur dans l'analyse syntaxique.@.";
 	exit 1
-   | Converter.VarUndef s-> 
-	(* Erreur d'utilisation de variable pendant la compilation *)
-	eprintf 
-	  "Erreur de compilation: la variable %s n'est pas d�finie@." s;
+   | Converter.VarUndef s ->
+	 (* Erreur d'utilisation de variable pendant la compilation *)
+	eprintf "Erreur de compilation: la variable %s n'est pas définie.@." s;
 	exit 1
 
 
