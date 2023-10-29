@@ -21,7 +21,7 @@ let id_if = ref 0
 (* compteur d'instruction WHILE *)
 let id_while=ref 0
 
-
+let lstwhile= ref [] 
 
 
 let rec index x acc = function
@@ -155,15 +155,13 @@ let rec compile_stmt void d stmt_node instr = match stmt_node with
     else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return
   | If(e, stmt) -> 
      incr id_if;
-     let suite = "suite" ^ (string_of_int !id_if) in   try 
+     let suite = "suite" ^ (string_of_int !id_if) in 
      let i=
      instr
      |> (compile_expr e)
      |> ~:(Beq(A0, Zero, suite)) in 
        (compile_stmt void d stmt i) 
      |> ~:(Label suite)
-  with
- |Econtinue inst -> Econtinue (Label suite :: )
     
   | IfElse(e, stmt1, stmt2) -> (
       
@@ -196,7 +194,9 @@ let rec compile_stmt void d stmt_node instr = match stmt_node with
       |Ebreak inst-> (Label endwhile)::(J endwhile)::inst  
       end
    | Continue -> raise (Econtinue instr)
-   |Break-> raise (Econtinue instr)
+   |Break-> (match !lstwhile with 
+  |[]-> failwith "on ne sort de rien"
+   |t::q-> lstwhile := q;    (Label ("endwhile"^t)):: (J ("endwhile"^t ))::instr ) 
 
 
 (* On compte les defs et on retire le même

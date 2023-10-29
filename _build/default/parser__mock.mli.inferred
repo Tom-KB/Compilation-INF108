@@ -1,0 +1,59 @@
+type token =
+    WHILE
+  | VOID
+  | TRUE
+  | TIMES
+  | SEMICOLON
+  | RP
+  | RETURN
+  | RCB
+  | PLUS
+  | OR
+  | NOT
+  | NEQ
+  | MOD
+  | MINUS
+  | LP
+  | LEQ
+  | LE
+  | LCB
+  | INTEGER of int
+  | INT
+  | IF
+  | IDENT of string
+  | GEQ
+  | GE
+  | FALSE
+  | EQQ
+  | EQ
+  | EOF
+  | ELSE
+  | DIV
+  | CONTINUE
+  | COMMA
+  | CHAR
+  | BREAK
+  | AND
+val menhir_begin_marker : int
+val xv_typ : Ast.t
+val xv_stmt : Ast.stmt
+val xv_simple_stmt : Ast.stmt
+val xv_separated_nonempty_list_COMMA_expr_ : Ast.expr list
+val xv_separated_nonempty_list_COMMA_arg_ : (Ast.t * string) list
+val xv_separated_list_COMMA_expr_ : Ast.expr list
+val xv_separated_list_COMMA_arg_ : (Ast.t * string) list
+val xv_option_SEMICOLON_ : unit option
+val xv_op : Ast.binop
+val xv_obj : Ast.obj
+val xv_no_declare_stmt : Ast.stmt
+val xv_loption_separated_nonempty_list_COMMA_expr__ : Ast.expr list
+val xv_loption_separated_nonempty_list_COMMA_arg__ : (Ast.t * string) list
+val xv_list_stmt_ : Ast.stmt list
+val xv_list_obj_ : Ast.program
+val xv_left_value : Ast.left_value
+val xv_func : Ast.func
+val xv_file : Ast.program
+val xv_expr : Ast.expr
+val xv_block : Ast.stmt list
+val xv_arg : Ast.t * string
+val menhir_end_marker : int
