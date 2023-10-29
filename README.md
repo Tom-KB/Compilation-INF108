@@ -38,7 +38,7 @@ Calc/
 
 TODO:
 
--commentaires
+-commentaires (fait)
 
 -BUG: If et IfElse crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels
 
