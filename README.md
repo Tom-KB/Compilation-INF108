@@ -40,13 +40,13 @@ TODO:
 
 -commentaires (fait)
 
--BUG: If et IfElse crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels
+-BUG: If et IfElse crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels (fait)
 
 -tester tous les opérateurs
 
 -système d'erreur de syntaxe
 
--Fonctions à n arguments
+-Fonctions à n  (fait)
 
 -while, break, continue
 
