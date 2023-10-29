@@ -20,6 +20,8 @@ Converter:
 
 -bug des IF ELSE RETURN corrigé
 
+-DAns la branche while les while fonctionne avec les break et les continue mais pas les breaks et les continues dans les if (J'ai laissé ce que j'ai commencé à faire,mais ca ne fonctionne pas) 
+
 Parser:
 
 -Bug du "dangling else" corrigé (IF suivi d'un If ELSE est ambigu car on sait pas a quel IF le ELSE est relié)
