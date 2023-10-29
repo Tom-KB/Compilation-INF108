@@ -17,6 +17,8 @@ and stmt_node =
 and left_value =
   | Var of string
 and expr =
+  | ValPointer of expr
+  | Address of left_value
   | I of int
   | Val of left_value
   | Moins of expr
