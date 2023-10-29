@@ -113,6 +113,7 @@ let rec compile_expr ex instr = match ex with
 
 let print = List.rev_append [Li (V0, 1); Syscall; Li (V0, 11); Li (A0, 10); Syscall]
 let return instr = Jr RA :: rem_from_pile 2 (Lw(RA, Areg(0, SP)) :: instr)
+let return' instr = Jr RA :: Addi (SP, SP, 8) :: Lw(RA, Areg(0, SP)) :: instr
 
 (* Compilation d'un stmt *)
 (* stmt -> instruction list -> instruction list *)
@@ -133,7 +134,7 @@ let rec compile_stmt void d stmt_node instr = match stmt_node with
   | Return e ->
     if void
     then failwith "Return in void function"
-    else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return
+    else instr |> (compile_expr e) |> ~:(Addi(SP, SP, d*4)) |> return'
   | If(e, stmt) ->
      incr id_if;
      let suite = "suite" ^ (string_of_int !id_if) in
@@ -152,7 +153,7 @@ let rec compile_stmt void d stmt_node instr = match stmt_node with
      |> (compile_stmt void d stmt1)
      |> ~:(J suite)
      |> ~:(Label else_)
-     |> (compile_stmt void d stmt1)
+     |> (compile_stmt void d stmt2)
      |> ~:(Label suite)
 
 (* On compte les defs et on retire le même

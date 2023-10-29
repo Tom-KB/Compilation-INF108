@@ -18,7 +18,7 @@ Converter:
 
 -On vérifie que main est bien à la fin
 
--certaines fonctionnalités de MARCHE PAS encore quand il y a des IF et des RETURN
+-bug des IF ELSE RETURN corrigé
 
 Parser:
 
