@@ -50,6 +50,8 @@ Calc:
 
 TODO:
 
+-variables globales
+
 -ajouter un prefixe func_ aux fonctions non mains pour éviter l'interférence avec les label des If, IfElse, while
 
 -tester tous les opérateurs
