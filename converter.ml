@@ -59,7 +59,7 @@ let value (x : string) instr = match var_type x !pile with
 let add_to_pile typ x instr = push (typ, x, false); Addi(SP, SP, -4) :: instr
 
 (* assign x v : assigne à x la valeur v,
-   en mettant à jour le booléen qui indique si la variable est assigné*)
+   en mettant à jour le booléen qui indique si la variable est assignée *)
 let assign x instr =
   let cnt = ref 0 in
   let flag = ref Void in
