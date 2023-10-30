@@ -8,7 +8,9 @@
 %token INT /* à ne pas confondre avec INTEGER qui est un entier */
 %token CHAR
 %token VOID
-%token NOT OR AND TRUE FALSE IF ELSE
+%token NOT OR AND TRUE FALSE
+%token IF ELSE WHILE BREAK CONTINUE
+%token AMP
 %token RETURN
 %token EOF COMMA SEMICOLON
 %token LP RP LCB RCB
@@ -75,6 +77,8 @@ simple_stmt:
   | left_value EQ expr { Assign($1, $3), $startpos } 
   | IDENT LP separated_list(COMMA, expr) RP { Scall($1, Array.of_list $3), $startpos }
   | RETURN expr { Return $2, $startpos }
+  | CONTINUE    { Continue, $startpos }  
+  | BREAK       { Break, $startpos } 
   ;
 
 no_declare_stmt:
@@ -82,6 +86,7 @@ no_declare_stmt:
   | block SEMICOLON?      { Block $1, $startpos }
   | IF LP expr RP no_declare_stmt %prec then_          { If($3, fst $5), $startpos }
   | IF LP expr RP no_declare_stmt ELSE no_declare_stmt { IfElse($3, fst $5, fst $7), $startpos }
+  | WHILE LP expr RP no_declare_stmt                   { While($3, fst $5), $startpos }
   ;
 
 /* cela sert à éviter de faire compiler if (1) int x; */
@@ -100,8 +105,10 @@ expr:
   | left_value                     { Val $1 }
   | expr op expr                   { Op ($2, $1, $3) }
   | MINUS expr %prec uminus        { Moins $2 }
-  | NOT expr                       { Not $2 } 
+  | NOT expr                       { Not $2 }
   | IDENT LP separated_list(COMMA, expr) RP { Ecall($1, Array.of_list $3) }
+  | AMP left_value                 { Address $2 }
+  | TIMES expr %prec uminus        { ValPointer $2 }
   | LP expr RP { $2 }
   ;
 

@@ -14,9 +14,14 @@ and stmt_node =
   | Return of expr (* return 1 *)
   | If of expr* stmt_node
   | IfElse of expr * stmt_node * stmt_node
+  | While of expr * stmt_node
+  | Continue
+  | Break
 and left_value =
   | Var of string
 and expr =
+  | ValPointer of expr
+  | Address of left_value
   | I of int
   | Val of left_value
   | Moins of expr

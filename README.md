@@ -20,11 +20,15 @@ Converter:
 
 -bug des IF ELSE RETURN corrigé
 
+-while, break, continue
+
 Parser:
 
 -Bug du "dangling else" corrigé (IF suivi d'un If ELSE est ambigu car on sait pas a quel IF le ELSE est relié)
 
 -Bug du if (1) int x; qui compile (alors que ca devrait pas) est corrigé
+
+-while, break, continue
 
 Lexer:
 
@@ -32,23 +36,23 @@ Lexer:
 
 -ajout du charactères \r dans les caractères ignorés
 
-Calc/
+-while, break, continue
+
+Calc:
 
 -L'erreur d'analyse lexicale print le code ascii en plus
 
 TODO:
 
--commentaires (fait)
+-commentaires
 
--BUG: If et IfElse crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels (fait)
+-BUG: If, IfElse, while crée des label dans le code MIPS donc trouver un moyen d'éviter les problèmes avec la définition de fonction avec les noms de ces labels
 
 -tester tous les opérateurs
 
 -système d'erreur de syntaxe
 
--Fonctions à n  (fait)
-
--while, break, continue
+-Fonctions à n arguments
 
 -pointeurs, tableau (int*, *, &, arithmetique : cf slide 12)
 
