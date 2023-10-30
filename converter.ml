@@ -172,8 +172,8 @@ let return n = List.rev_append [Lw(RA, Areg(0, SP)); Addi(SP, SP, 4*(1+n)); Jr R
 
 
 (* Compilation d'un stmt *)
-(* stmt -> bool -> int -> instruction list -> instruction list *)
-(* void est booléen indiquant si la fonction qui contient stmt est void
+(* stmt -> func -> int -> instruction list -> instruction list *)
+(* f la fonction qui contient stmt
    d est le nombre de variables locales définies avant *)
 let rec compile_stmt f d stmt_node instr = match stmt_node with
  | Def(P t, x) -> push_data x; add_to_pile (P t) x instr
