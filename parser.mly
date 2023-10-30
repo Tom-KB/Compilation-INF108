@@ -55,6 +55,7 @@ typ:
   | INT  { Int }
   | CHAR { Char }
   | VOID { Void }
+  | typ TIMES { P($1) }
   ;
 
 arg: typ IDENT { ($1, $2) }
@@ -74,7 +75,7 @@ left_value:
   ;
 
 simple_stmt:  
-  | left_value EQ expr { Assign($1, $3), $startpos } 
+  | expr EQ expr { Assign($1, $3), $startpos } 
   | IDENT LP separated_list(COMMA, expr) RP { Scall($1, Array.of_list $3), $startpos }
   | RETURN expr { Return $2, $startpos }
   | CONTINUE    { Continue, $startpos }  

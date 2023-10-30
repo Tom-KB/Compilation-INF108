@@ -8,7 +8,7 @@ and t = Void | Int | Char | P of t
 and stmt = stmt_node * pos
 and stmt_node =
   | Def of t * string (* int x; *)
-  | Assign of left_value * expr (* x = 1; *)
+  | Assign of expr * expr (* x = 1; *)
   | Scall of string * expr array (* print_int(1); *)
   | Block of stmt list
   | Return of expr (* return 1 *)
