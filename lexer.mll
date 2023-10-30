@@ -14,6 +14,9 @@
   "return", RETURN;
   "if", IF;
   "else", ELSE;
+  "while", WHILE; 
+  "continue", CONTINUE;
+  "break", BREAK; 
   ]
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }
