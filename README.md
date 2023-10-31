@@ -16,9 +16,9 @@ Projet compilateur:
 
         - Les commentaires /* ... */, // ... \n
 
-        - Arithmétique des pointeurs : les opérations d'addition et de soustraction d'entiers aux pointeurs (depuis un entier ou une variable) ainsi que la différence entre deux pointeurs.
+        - Arithmétique des pointeurs : les opérations d'addition et de soustraction d'entiers aux pointeurs (depuis un entier ou une variable) ainsi que la différence entre deux pointeurs. La syntaxe est cependant restreinte si on ne met pas de *(), soit k un pointeur, ces syntaxes fonctionnent (e)+k ou k+(e) (Exemple : (1+1*4)+k ou k+(1+1*4)), dans ces exemples les entiers sont automatiquement multipliés par 4. 
 
-        - 
+     
          
      Spécificités:
 
