@@ -1,10 +1,10 @@
 	.text
+	addi	$sp,$sp,0
 	j	main
 main:
-	addi	$sp,$sp,-4
-	sw	$a0,0($sp)
 	move	$a0, $ra
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	sw	$a0,0($sp)
 	li	$a0, 0
 	beq	$a0,$zero,suite1
@@ -69,10 +69,10 @@ suite5:
 	li	$a0, 0
 	addi	$sp,$sp,0
 	lw	$ra,0($sp)
-	addi	$sp,$sp,8
+	addi	$sp,$sp,4
 	jr	$ra
 	lw	$ra,0($sp)
-	addi	$sp,$sp,8
+	addi	$sp,$sp,4
 	jr	$ra
 	li	$v0, 10
 	syscall

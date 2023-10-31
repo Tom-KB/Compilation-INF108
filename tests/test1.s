@@ -1,10 +1,10 @@
 	.text
+	addi	$sp,$sp,0
 	j	main
 f:
-	addi	$sp,$sp,-4
-	sw	$a0,0($sp)
 	move	$a0, $ra
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	sw	$a0,0($sp)
 	li	$a0, 3
 	li	$v0, 1
@@ -21,18 +21,22 @@ f:
 	addi	$sp,$sp,8
 	jr	$ra
 main:
-	addi	$sp,$sp,-4
-	sw	$a0,0($sp)
 	move	$a0, $ra
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	sw	$a0,0($sp)
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	li	$a0, 1
 	sw	$a0,0($sp)
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	li	$a0, 2
 	sw	$a0,0($sp)
 	li	$a0, 5
+	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
+	sw	$a0,0($sp)
 	jal	f
 	li	$v0, 1
 	syscall
@@ -41,6 +45,7 @@ main:
 	syscall
 	lw	$a0,4($sp)
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	sw	$a0,0($sp)
 	li	$a0, 1
 	lw	$a1,0($sp)
@@ -54,6 +59,7 @@ main:
 	syscall
 	lw	$a0,4($sp)
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	sw	$a0,0($sp)
 	lw	$a0,4($sp)
 	lw	$a1,0($sp)
@@ -67,6 +73,7 @@ main:
 	syscall
 	lw	$a0,4($sp)
 	addi	$sp,$sp,-4
+	sw	$zero,0($sp)
 	sw	$a0,0($sp)
 	lw	$a0,4($sp)
 	lw	$a1,0($sp)
