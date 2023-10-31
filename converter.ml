@@ -6,10 +6,12 @@ open Printf
 
 exception VarUndef of string
 
-(* représente le champ data pour les pointeurs *)
+(* ---------------- *)
+(* List représentant le champ data pour les pointeurs *)
 let data_ptr = ref []
+(* Ajout du pointeur x au champ data, ajout d'un underscore pour éviter les interférences entre noms de variables et instructions MIPS *)
 let push_data x = (data_ptr := Word("_"^x, 0) :: !data_ptr)
-let pop_data () = (data_ptr := try List.tl !data_ptr with _ -> failwith "data ptr vide")
+(* ---------------- *)
 
 (* représente la pile SP *)
 let pile = ref []
@@ -33,45 +35,47 @@ let new_id_while =
    avec la tête de pile étant la plus profonde*)
 let pile_while = Stack.create ()
 
-(* Retourne vrai si la variable x est un pointeur *)
-let rec var_type x instr = let _x = "_"^x in match instr with
+(* ---------------- *)
+(* Retourne le type de la variable x *)
+let rec var_type x  = function
   | [] -> raise (VarUndef x)
   | (typ, h, _) :: t ->
-     if h = _x
+     if h = x
      then typ
      else var_type x t
 
-let rec index x acc instr = let _x = "_"^x in match instr with
+(* Retourne la position de la variable x dans la pile *)
+let rec index x acc = function
   | [] -> raise (VarUndef x)
   | (_, h, b) :: t ->
-    if h = _x
+    if h = x
     then (if b then acc else failwith "variable non assigné")
     else index x (acc+1) t
 
-(* renvoie la valeur associé à la variable x*)
+(* Value charge dans A0 la valeur associé à la variable x *)
 let value (x : string) instr = match var_type x !pile with
-  | P _ -> Lw(A0, Alab("_"^x)) :: instr
+  | P _ -> Lw(A0, Alab("_"^x)) :: instr (* Pour un pointeur la valeur mise dans A0 est une adresse *)
   | _ -> Lw(A0, Areg(4*index x 0 !pile, SP)) :: instr
-
+(* ---------------- *)
 
 (* augmente le taille de la pile *)
-let add_to_pile typ x instr = push (typ, "_"^x, false); Addi(SP, SP, -4) :: instr
+let add_to_pile typ x instr = push (typ, x, false); Addi(SP, SP, -4) :: instr
 
-(* assign x v : assigne à x la valeur v,
-   en mettant à jour le booléen qui indique si la variable est assignée *)
+(* ---------------- *)
+(* assign x instr : ajoute les opérations d'assignation de la valeur stockée dans A0 à la variable x*)
 let assign x instr =
-  let _x = "_"^x in
   let cnt = ref 0 in
   let flag = ref Void in
   let rec modifielist = function
     | [] -> raise (VarUndef(x))
-    | (typ, h, _) :: t when h = _x -> flag := typ; (typ, h, true) :: t
+    | (typ, h, _) :: t when h = x -> flag := typ; (typ, h, true) :: t
     |  h :: t -> incr cnt; h :: modifielist t
   in
   pile := modifielist !pile;
   match !flag with 
-    | P _ -> Sw(A0, Alab(_x)) :: instr
-    | _ -> Sw(A0, Areg(4 * !cnt, SP)) :: instr
+    | P _ -> Sw(A0, Alab("_"^x)) :: instr (* Stocke la valeur A0 dans le pointeur du champ data*)
+    | _ -> Sw(A0, Areg(4 * !cnt, SP)) :: instr (* Stocke la valeur A0 dans la stack à l'emplacement de x *)
+(* ---------------- *)
 
 (* retire les i dernières variables définies
    d'abord dans le compilateur
@@ -122,16 +126,21 @@ let apply (o : binop) r1 r2 =
    instructions soient lues dans le bon sens.
  *)
 
+(* ---------------- *)
+(* Réalisation de l'opération 9 qui réserve A0 octets sur le tas et renvoie l'adresse dans V0 *)
 let malloc = List.rev_append [Li (V0, 9); Syscall]
 
+(* Réalise les opérations arithmétique sur les pointeurs *)
 let rec apply_ptr_arith (o : binop) e1 e2 instr =
   let r1 = (compile_expr e1 instr) in
   (match e2 with
+      (* Addition et soustraction entre un pointeur et un entier *)
       | I i -> (match o with
                 | Add -> Addi (A0, A0, 4 * i) :: r1
                 | Sub -> Addi (A0, A0, -4 * i) :: r1
                 | _ -> failwith "Pointer arithmetic error"
               )
+      (* Soustraction de deux pointeurs *)
       | Val (Var _) -> let new_instr = Move(A1, A0) :: r1 in let r2 = compile_expr e2 new_instr in 
               (match o with
                 | Sub -> Mflo(A0) :: Div(A0, A1) :: Li(A1, 4) :: Sub (A0, A1, A0) :: r2
@@ -139,7 +148,7 @@ let rec apply_ptr_arith (o : binop) e1 e2 instr =
             )
       | _ -> failwith "Pointer arithmetic error"
     )
-  
+(* ---------------- *)  
 
 (* expr -> instruction list -> instruction list *)
 (* Met dans A0 le résultat de l'expression. *)
@@ -153,39 +162,40 @@ and compile_expr ex instr = match ex with
    |> ~:(Slti(A1, A0, 0))
    |> ~:(Slt(A0, Zero, A0))
    |> ~:(Nor(A0, A0, A1))
-   | Op(o, e1, e2) ->
+
+(* ---------------- *)
+ | Op(o, e1, e2) ->
+    let basic_op instructions = instructions 
+                  |> (compile_expr e1)
+                  |> (add_to_pile Int "1") (* on ajoute le res de e1 sous forme de variable nommé 1 *)
+                  |> (assign "1")
+                  |> (compile_expr e2)
+                  |> ~:(Lw(A1, Areg (0, SP))) (* on met le res de e1 dans A1 *)
+                  |> (rem_from_pile 1)
+                  |> (apply o A1 A0)
+    in
     (
       match e1 with 
         | Val (Var x) -> (
+                            (* Vérifie si le premier terme est un pointeur ou non *)
                             match var_type x !pile with 
-                              | P _ -> apply_ptr_arith o e1 e2 instr
-                              | _ ->  instr
-                                      |> (compile_expr e1)
-                                      |> (add_to_pile Int "1") (* on ajoute le res de e1 sous forme de variable nommé 1 *)
-                                      |> (assign "1")
-                                      |> (compile_expr e2)
-                                      |> ~:(Lw(A1, Areg (0, SP))) (* on met le res de e1 dans A1 *)
-                                      |> (rem_from_pile 1)
-                                      |> (apply o A1 A0)
+                              | P _ -> apply_ptr_arith o e1 e2 instr (* Si oui *)
+                              | _ -> basic_op instr (* Si non *)
                          )
-        | _ -> instr
-              |> (compile_expr e1)
-              |> (add_to_pile Int "1") (* on ajoute le res de e1 sous forme de variable nommé 1 *)
-              |> (assign "1")
-              |> (compile_expr e2)
-              |> ~:(Lw(A1, Areg (0, SP))) (* on met le res de e1 dans A1 *)
-              |> (rem_from_pile 1)
-              |> (apply o A1 A0)
+        | _ -> basic_op instr
 
     )
 
+  (* Opération malloc *)
   | Ecall("malloc", args) -> assert (Array.length args = 1);
-  instr |> ( match args.(0) with 
-              | Val (Var x) -> (match var_type x !pile with 
+    instr |> ( match args.(0) with 
+                | Val (Var x) -> (match var_type x !pile with 
                                   | P _ -> failwith "malloc ne prend pas de pointeur"
                                   | _ -> compile_expr args.(0)
                               )
-              | _ -> compile_expr args.(0)) |> malloc |> ~:(Move(A0, V0))
+                | _ -> compile_expr args.(0)
+           ) |> malloc |> ~:(Move(A0, V0)) (* Mets l'adresse de l'espace alloué (qui est dans V0) dans A0 *)
+(* ---------------- *)
 
   | Ecall(s, args) ->
    let typ, nb = Hashtbl.find tab_fonctions s in
@@ -194,13 +204,17 @@ and compile_expr ex instr = match ex with
    instr
    |> (compile_args args)
    |> ~:(Jal s)
-
+  
+  (* ---------------- *)
+  (* Déréférencement de pointeur, charge dans A0 la valeur de l'adresse pointée *)
   | ValPointer e -> Lw(A0, Areg(0, A0)) :: compile_expr e instr
+
+  (* Charge dans A0 l'adresse de la variable ou du pointeur avec La (Locate Adress) *)
   | Address (Var x) -> ( match var_type x !pile with 
                           | P _ -> La(A0, Alab("_"^x)) :: instr
                           | _ -> La(A0, Areg(4*index x 0 !pile, SP)) :: instr
                       )   
-
+  (* ---------------- *)
 
 and compile_args args instr =
   let res = Array.fold_left (fun instr' e ->
@@ -226,10 +240,18 @@ let rec compile_stmt f d stmt_node instr = match stmt_node with
  | Def(P t, x) -> push_data x; add_to_pile (P t) x instr
  | Def(typ, x) -> add_to_pile typ x instr
 
+ (* ---------------- *)
+ (* Assignation entre une variable, pointeur ou non, et une expression quelconque *)
+  (* Il n'y a pas de vérification concernant l'assignation entre un pointeur et un entier, auquel cas la valeur de l'entier est interprété comme une adresse *)
  | Assign(Val (Var x), e2) -> let instructions = instr |> (compile_expr e2) in assign x instructions
+
+ (* Assignation entre un pointeur déréférencé et une expression quelconque*)
  | Assign(ValPointer (e1), e2) -> let instructions = instr |> (compile_expr e2) |> ~:(Move(T 0, A0)) in Sw(T 0, Areg(0, A0)) :: (compile_expr e1 instructions)
+
+ (* Erreur lorsqu'une assignation est tenté entre d'autres expressions *)
  | Assign(_, _) -> failwith "Wrong assign"
 
+ (* Fonction permettant d'afficher un entier *)
  | Scall("print_int", args) ->
   assert (Array.length args = 1);
   instr |> ( match args.(0) with 
@@ -238,6 +260,7 @@ let rec compile_stmt f d stmt_node instr = match stmt_node with
                                    | _ -> compile_expr args.(0)
                                 )
                | _ -> compile_expr args.(0)) |> print
+ (* ---------------- *)
 
  | Scall(s, args) ->
    let typ, nb = Hashtbl.find tab_fonctions s in
@@ -309,7 +332,15 @@ let verify_arg_name args =
 
 (* func -> instruction list -> instruction list *)
 let compile_obj obj instr = match obj with
- | V(typ, name) -> add_to_pile typ name instr
+ (* ---------------- *)
+ | V(typ, name) -> (
+                    match typ with 
+                      (* Ajoute au champ data un pointeur *)
+                      | P _ -> push_data name; add_to_pile typ name instr
+                      (* Ajoute sur la pile une variable *)
+                      | _ -> add_to_pile typ name instr
+                   )
+ (* ---------------- *)
  | F f ->
    verify_arg_name f.args;
    let nb_arg =  Array.length f.args in
