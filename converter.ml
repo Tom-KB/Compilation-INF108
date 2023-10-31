@@ -141,11 +141,20 @@ let rec apply_ptr_arith (o : binop) e1 e2 instr =
                 | _ -> failwith "Pointer arithmetic error"
               )
       (* Soustraction de deux pointeurs *)
-      | Val (Var _) -> let new_instr = Move(A1, A0) :: r1 in let r2 = compile_expr e2 new_instr in 
-              (match o with
-                | Sub -> Mflo(A0) :: Div(A0, A1) :: Li(A1, 4) :: Sub (A0, A1, A0) :: r2
-                | _ -> failwith "Pointer arithmetic error"
-            )
+      | Val (Var x) -> let new_instr = Move(A1, A0) :: r1 in let r2 = compile_expr e2 new_instr in 
+              (
+                match var_type x !pile with
+                  | P _ -> (
+                            match o with
+                            | Sub -> Mflo(A0) :: Div(A0, A1) :: Li(A1, 4) :: Sub (A0, A1, A0) :: r2
+                            | _ -> failwith "Pointer arithmetic error"
+                          )
+                  | _ -> (match o with
+                          | Add -> Add (A0, A1, A0) :: Mflo (A0) :: Mult (A0, T 0) :: Li (T 0, 4) :: r2
+                          | Sub -> Sub (A0, A1, A0) :: Mflo (A0) :: Mult (A0, T 0) :: Li (T 0, 4) :: r2
+                          | _ -> failwith "Pointer arithmetic error"
+                         )
+              )
       | _ -> failwith "Pointer arithmetic error"
     )
 (* ---------------- *)  
