@@ -203,7 +203,7 @@ and compile_expr ex instr = match ex with
    assert (Array.length args = nb);
    instr
    |> (compile_args args)
-   |> ~:(Jal s)
+   |> ~:(Jal  ("func_"^s)) 
   
   (* ---------------- *)
   (* Déréférencement de pointeur, charge dans A0 la valeur de l'adresse pointée *)
@@ -268,7 +268,7 @@ let rec compile_stmt f d stmt_node instr = match stmt_node with
    assert (Array.length args = nb);
    instr
    |> (compile_args args)
-   |> ~:(Jal s)
+   |> ~:(Jal  ("func_"^s))
  | Block lst -> compile_block f 0 lst instr
  | Return e ->
    if f.typ = Void
@@ -342,12 +342,13 @@ let compile_obj obj instr = match obj with (* on compile les variables globales 
                    )
  (* ---------------- *)
  | F f ->  (* on compile les fonctions*)
-   verify_arg_name f.args; () (* On vérifie que les arguments ne sont pas des voids et deux fois le meme nom d'argument *)
+   verify_arg_name f.args; (* On vérifie que les arguments ne sont pas des voids et deux fois le meme nom d'argument *)
    let nb_arg =  Array.length f.args in
    Hashtbl.add tab_fonctions f.name (f.typ, nb_arg); (*clé de la table de hachage le nom de la fonction et la valeur est le couple type nombre d'argument de la fonction*)
    Array.iter (fun (typ, name) -> push (typ, name, true)) f.args; (* On ajoute les arguments sur la pile *)
+   let name_f= if f.name="main" then "main" else ("func_"^f.name)  in (*evite que les fonction interfère avec nos labels *)
    instr
-   |> ~:(Label f.name)
+   |> ~:(Label name_f)
    |> ~:(Move(A0, RA))  
    |> (add_to_pile Int "0RA") (*Sert a retenir la position de RA  *)
    |> (assign "0RA")
