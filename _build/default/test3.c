@@ -7,6 +7,7 @@ int fac1(int x){
   return x*fac1(x-1);
 }
 
+
 int fac2(int x){
   if (x < 2) return 1;
   else return x*fac2(x-1);
@@ -37,11 +38,15 @@ int fac6(int x){
 
 
 void main(int x){
+  f(10);
+  
   f(fac1(5));
   f(fac2(5));
+  
   f(fac3(5));
   f(fac4(5));
   f(fac5(5));
   f(fac6(5));
+  
 }
 
