@@ -16,7 +16,7 @@ Projet compilateur:
 
         - Les commentaires /* ... */, // ... \n
 
-        - arithmétique des pointeurs : les opérations 
+        - Arithmétique des pointeurs : les opérations d'addition et de soustraction d'entiers aux pointeurs (depuis un entier ou une variable) ainsi que la différence entre deux pointeurs.
 
         - 
          
