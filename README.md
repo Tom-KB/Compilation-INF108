@@ -40,5 +40,4 @@ Projet compilateur:
 
         - Gestion des return : Lorsqu'on arrive sur un return, on doit désallouer les variables locales définies avant, et désallouer les arguments de la fonction dans laquelle on est, pour cela, on décale Sp, cependant on ne les retire pas de pile, car si le return est dans un if par exemple, on pourrait en avoir besoin dans d'autres parties de la fonction. Ainsi, on retire les arguments de pile dans compile obj.
         
-        -
         
