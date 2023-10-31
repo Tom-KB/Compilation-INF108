@@ -1,8 +1,6 @@
 	.text
 	j	main
 main:
-	addi	$sp,$sp,-4
-	sw	$a0,0($sp)
 	move	$a0, $ra
 	addi	$sp,$sp,-4
 	sw	$a0,0($sp)
@@ -69,10 +67,10 @@ suite5:
 	li	$a0, 0
 	addi	$sp,$sp,0
 	lw	$ra,0($sp)
-	addi	$sp,$sp,8
+	addi	$sp,$sp,4
 	jr	$ra
 	lw	$ra,0($sp)
-	addi	$sp,$sp,8
+	addi	$sp,$sp,4
 	jr	$ra
 	li	$v0, 10
 	syscall

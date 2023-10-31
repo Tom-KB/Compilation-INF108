@@ -1,8 +1,6 @@
 	.text
 	j	main
 f:
-	addi	$sp,$sp,-4
-	sw	$a0,0($sp)
 	move	$a0, $ra
 	addi	$sp,$sp,-4
 	sw	$a0,0($sp)
@@ -21,8 +19,6 @@ f:
 	addi	$sp,$sp,8
 	jr	$ra
 main:
-	addi	$sp,$sp,-4
-	sw	$a0,0($sp)
 	move	$a0, $ra
 	addi	$sp,$sp,-4
 	sw	$a0,0($sp)
@@ -33,6 +29,8 @@ main:
 	li	$a0, 2
 	sw	$a0,0($sp)
 	li	$a0, 5
+	addi	$sp,$sp,-4
+	sw	$a0,0($sp)
 	jal	f
 	li	$v0, 1
 	syscall

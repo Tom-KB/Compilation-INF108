@@ -36,7 +36,7 @@ int fac6(int x){
 }
 
 
-void main(int x){
+void main(){
   f(fac1(5));
   f(fac2(5));
   f(fac3(5));
