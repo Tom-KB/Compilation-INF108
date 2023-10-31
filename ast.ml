@@ -1,15 +1,17 @@
+
 type pos = Lexing.position
 
-
+(*prg est une liste de définitions de variables globales et de fonctions*)
 type program = obj list
 and obj = F of func | V of t * string
+(* on retient pour une fonction sn type, son nom, se argument et ses instructions*)
 and func = { typ : t; name : string; args : (t * string) array; body : stmt_node }
 and t = Void | Int | Char | P of t
 and stmt = stmt_node * pos
 and stmt_node =
   | Def of t * string (* int x; *)
   | Assign of expr * expr (* x = 1; *)
-  | Scall of string * expr array (* print_int(1); *)
+  | Scall of string * expr array (* uniqument les fonctions void, comme print_int(1); *)
   | Block of stmt list
   | Return of expr (* return 1 *)
   | If of expr* stmt_node

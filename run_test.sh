@@ -40,7 +40,7 @@ for prog in tests/*.c ; do
             echo "Compilation failed ${out}?"  ;
             exit 3 ;
         fi ;
-        spim -file $mips < $in | grep '^[0-9]*$'> $tmp
+        spim -file $mips < $in | grep '^(-)?[0-9]*$'> $tmp
         if ! cmp --silent $tmp $out ;
         then
             echo "Test ${prog%%.c} failed: output is not what was expected!"

@@ -1,10 +1,11 @@
 {
-  (* Ici on défini tout le code OCaml executé avant le Lexer.
+  (* Ici on définit tout le code OCaml executé avant le Lexer.
      Le "open Parser" permet de définir les tokens.
   *)
   open Parser
   exception Lexing_error of char
-    
+
+(* On définit ici les mots-clés que l'on reconnaît dans le code c*) 
   let kwd_tbl = [
   "true", TRUE;
   "false", FALSE;
@@ -18,6 +19,8 @@
   "continue", CONTINUE;
   "break", BREAK; 
   ]
+  (* Renvoie IDENT si s ne correspon à aucun des mots-clés, sinon 
+  il renvoie le token correspondant*)
   let id_or_kwd s = try List.assoc s kwd_tbl with _ -> IDENT s
 }
 
@@ -33,9 +36,13 @@ let comment1 = "/*" ([^'*'] | '*' [^'/'])* "*/"
 let comment2 = "//" [^'\n']* '\n'
 let comment = comment1 | comment2
 
+(* on ignorera ces cas: les commentaires (car pas decommentaires dans mips), les carriage return et les espaces*)
 let ignore = space | carriage_return | comment
 
+(*les chaînes de caractères doivent commencer par une lettre, le reste des caractères peuvent être
+des lettres ou bien des chiffres*)
 let ident = letter (letter | digit)*
+(* un integer est composé d'un chiffre ou plus*)
 let integer = digit+
 
 (* Cela définit la fonction OCaml "Lexing.read".

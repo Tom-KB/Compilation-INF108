@@ -5,9 +5,11 @@
  
 %token <int> INTEGER
 %token <string> IDENT
+/* types des variables */
 %token INT /* à ne pas confondre avec INTEGER qui est un entier */
 %token CHAR
 %token VOID
+
 %token NOT OR AND TRUE FALSE
 %token IF ELSE WHILE BREAK CONTINUE
 %token AMP

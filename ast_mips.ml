@@ -1,4 +1,4 @@
-
+(* registres utilisés*)
 type register = 
   | A0 | A1 | V0 | RA | SP | GP | FP | T of int | S of int | Zero 
 
@@ -45,7 +45,9 @@ type mips_program = {
   data : data list;
 }
 
+(* Pour transformer l'Ast mips en code, en utilise ces fonctions*)
 
+(* transforme les registre de l'Ast en string*)
 let string_register = function
   | A0 -> "$a0"
   | A1 -> "$a1"
@@ -58,12 +60,12 @@ let string_register = function
   | S i -> "$t"^(string_of_int i)
   | Zero -> "$zero"
 
-         
+(* remplace les adresses mips en string*)
 let string_address = function
   | Alab s ->  s
   | Areg (ofs, r) -> (string_of_int ofs)^"("^(string_register r)^")"
 
-
+(* remplace les instruction de l'Ast en sring, en utilisant les fonctions précédentes*)
 let string_instruction = function
   | Bne (dst, src, branchement) -> 
    "\tbne\t"^(string_register dst)^","^(string_register src)^","^branchement
@@ -114,18 +116,26 @@ let string_instruction = function
   | Comment s ->  "\t "^s
   | Label s ->  s^":"
 
+  (* Transforme les champs de data en string*)
 let string_data = function
   | Asciiz (l, s) -> 
       l^":\t.asciiz '"^(String.escaped s)^"'"
   | Word (l, n) ->
      l^": \t.word "^(string_of_int n)
+
+(* écrit le programme dans le fichier mips de destination*)
 let print_program p out_filename =
+   (*ouvre le fichier destination*)
   let out_file = open_out out_filename in
   let add s =
+      (* écrit toutes les lignes de code*)
      Printf.fprintf out_file "%s\n" s;
   in
+  (* on écrit le champ texte, et on y ajoute les lignes de code*)
   add "\t.text";
   List.iter (fun e -> string_instruction e |> add ) p.text  ;
+  (* écrit le champ data et y ecrit les informations*)
   add "\t.data";
   List.iter (fun e -> string_data e |> add ) p.data ;
+  (* fermeture du fichier de destination*)
   close_out out_file
