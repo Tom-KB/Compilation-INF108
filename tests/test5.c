@@ -1,18 +1,25 @@
-//fonction puissance
-int pow(int x, int n){
-  if (n == 0) return 1;
-  if (n % 2 == 0) return pow(x*x, n/2);
-  return x*pow(x*x, n/2);
-}
+void f(int x, int y){
+    int u ;
+    u= x+y;
+    while (u>3){
+        print_int(6);
+        int v;
+        v=3;
+        if (x>3){
+            while (v>0){
+                print_int(5);
+                v=v-1;
+            } 
+        } else{
+            while (v>0){
+                print_int(-1);
+                v=v-1;
+            } 
+        } u= u-1;
+    } print_int(0);
+} 
 
-/* main */
-void main (){
-  int v;
-  int w;
-  v = 3;
-  w = pow(v, v);
-  print_int(w);
-  print_int(pow(w, 2));
-  print_int(pow(1, w));
-  print_int(pow(v, w/10));
-}
+void main(){
+    f(4,1);
+    f(1,4);
+} 
