@@ -10,11 +10,15 @@ Projet compilateur:
         
         - Comparaisons et opérations sur les booléens : <, <=, >, >=, !=, ==, &&, || (pas d'évaluation paresseuse)
 
-        - Fonctions: Les fonctions peuvent être de type int ou void, donc renvoyer une valeur ou non. Elles peuvent avoir un nombre arbitraire d'arguments(0 ou un nombre entier positif). Les fonctions print_int et malloc sont supportées par le compilateur.
+        - Fonctions: Les fonctions peuvent être de type int ou void, donc renvoyer une valeur ou non. Elles peuvent avoir un nombre arbitraire d'arguments(0 ou un nombre entier positif, mais pas de pointeurs). Les fonctions peuvent également renvoyées un pointeur. Les fonctions print_int et malloc sont supportées par le compilateur.
 
         - Instructions supportées par le compilateur: if _, if _ else, while _, continue et break, return, = , définitions de variables
 
         - Les commentaires /* ... */, // ... \n
+
+        - arithmétique des pointeurs : les opérations 
+
+        - 
          
      Spécificités:
 
@@ -35,3 +39,6 @@ Projet compilateur:
         - Désallouement des variables locales : d correspond au nombre de variables locales définies dans un bloc. Il nous permet de savoir combien de variables locales on doit désallouer de la pile lorsqu'on arrive sur un return ou lorsqu'on arrive à la fin d'un bloc.
 
         - Gestion des return : Lorsqu'on arrive sur un return, on doit désallouer les variables locales définies avant, et désallouer les arguments de la fonction dans laquelle on est, pour cela, on décale Sp, cependant on ne les retire pas de pile, car si le return est dans un if par exemple, on pourrait en avoir besoin dans d'autres parties de la fonction. Ainsi, on retire les arguments de pile dans compile obj.
+        
+        -
+        
