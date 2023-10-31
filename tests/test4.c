@@ -1,19 +1,17 @@
-int main(int w)
-{
-    int x;
-    int y;
-    x = 0;
-    while (x < 5) {
-      y = 0;
-      while (y < 5) {
-        if (x+y == 3) break;
-        print_int(x+y);
-        y = y+1;
-      }
-      print_int(999);
-      x=x+1;
-    }
+int  fib(int n){
+  if(n<=1) return n;
+  return fib(n-1)+fib(n-2)  ;
+}
 
+int syr(int n){
+  if(n==1) return 0;
+  if(n%2) return syr(3*n+1);
+  return syr(n/2);
+}
 
-    return 0;
+int main (){
+  int v;
+  v = fib(10);
+  print_int(v);
+  print_int(syr(v));
 }
